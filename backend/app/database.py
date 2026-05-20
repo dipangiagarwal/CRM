@@ -9,8 +9,11 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     connect_args={"ssl": ssl_context},
     echo=settings.ENVIRONMENT == "development",
-    pool_size=10,
-    max_overflow=20,
+    pool_size=5,
+    max_overflow=10,
+    pool_recycle=300,      # recycle connections every 5 minutes
+    pool_pre_ping=True,    # test connection before using it — auto-reconnects if closed
+    pool_timeout=30,
 )
 
 AsyncSessionLocal = async_sessionmaker(

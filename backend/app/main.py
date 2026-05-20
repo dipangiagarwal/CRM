@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import auth
 
 app = FastAPI(
     title="Pixel CRM",
@@ -16,12 +17,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routers
+# Every new router gets registered here with the /api/v1 prefix.
+app.include_router(auth.router, prefix="/api/v1")
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "pixel-crm"}
 
 @app.get("/")
 async def root():
-    return {"message": "Pixel CRM working successfully"}
-
-
+    return {"message": "Pixel CRM API is working"}

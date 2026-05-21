@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, contacts, deals
+from app.routers import auth, contacts, deals, activities
 
 app = FastAPI(
     title="Pixel CRM",
@@ -22,6 +22,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(contacts.router, prefix="/api/v1")
 app.include_router(deals.router, prefix="/api/v1")
+app.include_router(activities.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():

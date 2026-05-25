@@ -9,8 +9,12 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     PLATFORM_ADMIN_KEY: str
     ENVIRONMENT: str = "development"
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_WEBHOOK_SECRET: str = ""
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

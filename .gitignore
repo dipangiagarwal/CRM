@@ -32,6 +32,4 @@ dist/
 .idea/
 *.DS_Store
 
-# Alembic
-backend/alembic/versions/*.py
 EOF

@@ -35,3 +35,4 @@ class Organization(Base):
     activities = relationship("Activity", back_populates="organization")
     billing = relationship("Billing", back_populates="organization")
     audit_logs = relationship("AuditLog", back_populates="organization")
+    files = relationship("File", back_populates="organization")

@@ -30,3 +30,4 @@ class User(Base):
     deals = relationship("Deal", back_populates="owner")
     activities = relationship("Activity", back_populates="user")
     audit_logs = relationship("AuditLog", back_populates="user")
+    files = relationship("File", back_populates="uploader")

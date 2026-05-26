@@ -7,3 +7,4 @@ from app.models.deal import Deal
 from app.models.activity import Activity
 from app.models.billing import Billing
 from app.models.audit_log import AuditLog
+from app.models.file import File

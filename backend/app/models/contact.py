@@ -33,3 +33,4 @@ class Contact(Base):
     owner = relationship("User", back_populates="contacts")
     deals = relationship("Deal", back_populates="contact")
     activities = relationship("Activity", back_populates="contact")
+    files = relationship("File", back_populates="contact")

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h2>Pixel CRM - Test Payment</h2>
+    <button onclick="payNow()">Pay Now ₹499</button>
+    <script>
+        function payNow() {
+            var options = {
+                key: "rzp_test_SrzWPyyJLha2E8",
+                amount: 29900,
+                currency: "INR",
+                order_id: "order_Strk6jtVaSHZUb",
+                name: "Pixel CRM",
+                description: "Starter Plan",
+                handler: function(response) {
+                    alert("Payment successful!\nPayment ID: " + response.razorpay_payment_id)
+                },
+                prefill: {
+                    email: "dipangi@test.com",
+                    contact: "9999999999"
+                }
+            }
+            var rzp = new Razorpay(options)
+            rzp.open()
+        }
+    </script>
+</body>
+</html>

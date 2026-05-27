@@ -9,6 +9,7 @@ from app.middleware.auth import verify_token, CurrentUser
 from app.models.deal import Deal
 from app.models.contact import Contact
 from app.schemas.deal import DealCreate, DealUpdate, DealStageUpdate, DealResponse
+from app.sockets.manager import emit_to_org
 
 router = APIRouter(prefix="/deals", tags=["Deals"])
 
@@ -225,6 +226,16 @@ async def update_deal_stage(
 
     await db.commit()
     await db.refresh(deal)
+
+    # Emit real-time update to all org users
+    await emit_to_org(user.org_id, "deal_stage_changed", {
+        "deal_id": str(deal.id),
+        "title": deal.title,
+        "old_stage": deal.stage,
+        "new_stage": data.stage,
+        "changed_by": user.first_name
+    })
+
     return deal
 
 

@@ -10,6 +10,7 @@ from app.database import AsyncSessionLocal
 from app.models.billing import Billing
 from app.models.organization import Organization
 from app.config import settings
+from app.sockets.manager import emit_to_org
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
@@ -71,6 +72,14 @@ async def activate_subscription(tenant_id: str, amount: int, plan: str, payment_
             billing.period_end = new_end
 
         await db.commit()
+
+    # Emit payment success to org
+    await emit_to_org(tenant_id, "payment_update", {
+        "status": "success",
+        "message": "Payment successful! Subscription activated.",
+        "plan": plan,
+        "sub_end": str(new_end)
+    })
 
 
 @router.post("/razorpay")

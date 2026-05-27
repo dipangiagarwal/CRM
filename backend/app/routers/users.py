@@ -10,6 +10,7 @@ from app.models.contact import Contact
 from app.models.deal import Deal
 from app.schemas.user import UserInvite, UserUpdate, RoleUpdate, TransferData, UserResponse
 from app.utils.security import hash_password
+from app.sockets.manager import emit_to_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -314,6 +315,11 @@ async def deactivate_user(
     # Without this, user stays active until their 15 min token expires
     from app.utils.redis import delete_session
     await delete_session(user_id)
+
+    # Emit to deactivated user → frontend will logout them
+    await emit_to_user(user_id, "user_deactivated", {
+        "message": "Your account has been deactivated"
+    })
 
     return target_user
 

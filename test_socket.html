@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket Test</title>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Socket.io Test</h2>
+    <div id="status">Connecting...</div>
+    <div id="events"></div>
+    <script>
+        // Replace with your actual token after login
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZTZmMTI1YS03NjgzLTRhYmUtYTc3Yy03YjllMTJmYjI4YTciLCJvcmdfaWQiOiI1MTFhYjJjZC1lZjMwLTQzYmQtOTIzNC04NGU2ODFjMDcwY2MiLCJyb2xlIjoiYWRtaW4iLCJ0eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc5OTQ2NjA2fQ.9Hdj68VIs-QPfPtMmjIOD3YRA3shAOG07NDxl2e1T6c"
+
+        const socket = io("http://localhost:8000", {
+            auth: { token: token }
+        })
+
+        socket.on("connect", () => {
+            document.getElementById("status").innerHTML = 
+                "✅ Connected: " + socket.id
+        })
+
+        socket.on("disconnect", () => {
+            document.getElementById("status").innerHTML = 
+                "❌ Disconnected"
+        })
+
+        socket.on("deal_stage_changed", (data) => {
+            document.getElementById("events").innerHTML += 
+                "<p>Deal updated: " + JSON.stringify(data) + "</p>"
+        })
+
+        socket.on("payment_update", (data) => {
+            document.getElementById("events").innerHTML += 
+                "<p>Payment: " + JSON.stringify(data) + "</p>"
+        })
+
+        socket.on("user_deactivated", (data) => {
+            document.getElementById("events").innerHTML += 
+                "<p>Deactivated: " + JSON.stringify(data) + "</p>"
+        })
+    </script>
+</body>
+</html>

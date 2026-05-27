@@ -104,6 +104,16 @@ async def invite_user(
     )
     db.add(new_user)
     await db.commit()
+
+    # Send invite email in background
+    from app.tasks.email import send_invite_email
+    send_invite_email.delay(
+        email=data.email,
+        first_name=data.first_name,
+        company_name=org.name,
+        temp_password=data.password
+    )
+
     await db.refresh(new_user)
     return new_user
 

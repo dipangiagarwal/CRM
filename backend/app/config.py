@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: str = ""
     R2_BUCKET_NAME: str = "pixel-crm-files"
     R2_PUBLIC_URL: str = ""
+    RESEND_API_KEY: str = ""
+    FROM_EMAIL: str = "onboarding@resend.dev"
+    GMAIL_USER: str = ""
+    GMAIL_APP_PASSWORD: str = ""
 
     class Config:
         env_file = ".env"

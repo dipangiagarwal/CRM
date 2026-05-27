@@ -99,6 +99,14 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
     db.add(user)
     await db.commit()
 
+    # Send welcome email in background — non-blocking
+    from app.tasks.email import send_welcome_email
+    send_welcome_email.delay(
+        email=data.email,
+        first_name=data.first_name,
+        company_name=data.company_name
+    )
+
     # Issue tokens — auto login after register
     access_token = create_access_token(str(user.id), str(org.id), user.role)
     refresh_token = create_refresh_token(str(user.id))

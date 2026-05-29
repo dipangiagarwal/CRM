@@ -3,17 +3,30 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from pydantic import BaseModel, EmailStr
 from app.database import get_db
 from app.models.organization import Organization
 from app.models.user import User
-from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, RefreshResponse
+from app.schemas.auth import RegisterRequest, LoginRequest, ChangePasswordRequest
 from app.utils.security import hash_password, verify_password
 from app.utils.jwt import create_access_token, create_refresh_token, decode_refresh_token
-from app.utils.redis import set_session, delete_session, blacklist_refresh_token, is_token_blacklisted
+from app.utils.redis import set_session, delete_session, blacklist_refresh_token, is_token_blacklisted, redis_client
+from app.middleware.auth import verify_token, CurrentUser
+from app.tasks.email import send_reset_email
 from jose import JWTError
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
     """
@@ -39,19 +52,23 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
 
+
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(data: RegisterRequest, response: Response, db: AsyncSession = Depends(get_db)):
+async def register(
+    data: RegisterRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
     """
     Register a new organization and its first admin user.
     Steps:
-    1. Check slug is unique (no duplicate companies)
-    2. Check email is unique (no duplicate users)
+    1. Check slug is unique
+    2. Check email is unique
     3. Create organization
     4. Create first admin user
     5. Issue tokens immediately (auto-login after register)
     """
 
-    # Check slug uniqueness
     slug_check = await db.execute(
         select(Organization).where(Organization.slug == data.company_slug)
     )
@@ -61,7 +78,6 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
             detail="Company URL already taken. Choose a different slug."
         )
 
-    # Check email uniqueness
     email_check = await db.execute(
         select(User).where(User.email == data.email)
     )
@@ -71,7 +87,6 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
             detail="Email already registered"
         )
 
-    # Create organization
     org = Organization(
         id=uuid.uuid4(),
         name=data.company_name,
@@ -81,9 +96,8 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
         max_users=5,
     )
     db.add(org)
-    await db.flush()  # get org.id before creating user
+    await db.flush()
 
-    # Create first admin user
     user = User(
         id=uuid.uuid4(),
         org_id=org.id,
@@ -99,7 +113,6 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
     db.add(user)
     await db.commit()
 
-    # Send welcome email in background — non-blocking
     from app.tasks.email import send_welcome_email
     send_welcome_email.delay(
         email=data.email,
@@ -107,11 +120,9 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
         company_name=data.company_name
     )
 
-    # Issue tokens — auto login after register
     access_token = create_access_token(str(user.id), str(org.id), user.role)
     refresh_token = create_refresh_token(str(user.id))
 
-    # Cache session in Redis
     await set_session(str(user.id), {
         "email": user.email,
         "first_name": user.first_name,
@@ -132,34 +143,33 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
 
 
 @router.post("/login")
-async def login(data: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+async def login(
+    data: LoginRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
     """
     Login with email + password.
     Returns access + refresh tokens as httpOnly cookies.
-    Checks user is active and org is active before issuing tokens.
     """
 
-    # Find user by email
     result = await db.execute(
         select(User).where(User.email == data.email)
     )
     user = result.scalar_one_or_none()
 
-    # Generic error — don't reveal if email exists or not
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
 
-    # Check user is active
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been deactivated"
         )
 
-    # Check organization status
     org_result = await db.execute(
         select(Organization).where(Organization.id == user.org_id)
     )
@@ -171,15 +181,12 @@ async def login(data: LoginRequest, response: Response, db: AsyncSession = Depen
             detail="Your organization has been suspended. Contact support."
         )
 
-    # Update last login time
     user.last_login_at = str(datetime.now(timezone.utc))
     await db.commit()
 
-    # Create both tokens
     access_token = create_access_token(str(user.id), str(user.org_id), user.role)
     refresh_token = create_refresh_token(str(user.id))
 
-    # Cache session in Redis for fast auth on subsequent requests
     await set_session(str(user.id), {
         "email": user.email,
         "first_name": user.first_name,
@@ -192,7 +199,7 @@ async def login(data: LoginRequest, response: Response, db: AsyncSession = Depen
     set_auth_cookies(response, access_token, refresh_token)
 
     return {
-        "message": "Login successfully",
+        "message": "Login successful",
         "user_id": str(user.id),
         "org_id": str(user.org_id),
         "role": user.role,
@@ -202,11 +209,14 @@ async def login(data: LoginRequest, response: Response, db: AsyncSession = Depen
 
 
 @router.post("/refresh")
-async def refresh_token(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+async def refresh_token(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Get a new access token using the refresh token cookie.
-    Called automatically by frontend when access token expires (every 15 min).
-    Checks refresh token is not blacklisted (logged out tokens).
+    Get new access token using refresh token cookie.
+    Called automatically by frontend when access token expires.
     """
 
     token = request.cookies.get("refresh_token")
@@ -216,14 +226,12 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
             detail="Refresh token missing"
         )
 
-    # Check if this refresh token was blacklisted (used after logout)
     if await is_token_blacklisted(token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked. Please login again."
         )
 
-    # Decode and verify refresh token
     try:
         payload = decode_refresh_token(token)
     except JWTError:
@@ -234,7 +242,6 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
 
     user_id = payload.get("sub")
 
-    # Get fresh user data from DB
     result = await db.execute(
         select(User).where(User.id == uuid.UUID(user_id))
     )
@@ -246,12 +253,10 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
             detail="User account is deactivated"
         )
 
-    # Issue new access token with fresh role data
     new_access_token = create_access_token(
         str(user.id), str(user.org_id), user.role
     )
 
-    # Rebuild Redis session
     await set_session(str(user.id), {
         "email": user.email,
         "first_name": user.first_name,
@@ -261,7 +266,6 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
         "is_active": True
     })
 
-    # Set new access token cookie — refresh token stays the same
     response.set_cookie(
         key="access_token",
         value=new_access_token,
@@ -278,27 +282,127 @@ async def refresh_token(request: Request, response: Response, db: AsyncSession =
 async def logout(request: Request, response: Response):
     """
     Logout — clear both cookies and blacklist refresh token.
-    After this, neither token works even if someone copied them.
     """
 
     refresh_token = request.cookies.get("refresh_token")
     access_token = request.cookies.get("access_token")
 
-    # Blacklist the refresh token so it cannot be reused
     if refresh_token:
         await blacklist_refresh_token(refresh_token)
 
-    # Delete Redis session immediately
     if access_token:
         try:
             from app.utils.jwt import decode_access_token
             payload = decode_access_token(access_token)
             await delete_session(payload.get("sub"))
         except JWTError:
-            pass  # token already expired — session already gone
+            pass
 
-    # Clear both cookies from browser
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
 
     return {"message": "Logged out successfully"}
+
+
+@router.post("/change-password")
+async def change_password(
+    data: ChangePasswordRequest,
+    user: CurrentUser = Depends(verify_token),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Change password — called on first login or voluntary change.
+    Sets tour_completed = True after first password change.
+    """
+
+    result = await db.execute(
+        select(User).where(User.id == uuid.UUID(user.user_id))
+    )
+    db_user = result.scalar_one_or_none()
+
+    if not verify_password(data.old_password, db_user.password_hash):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+
+    db_user.password_hash = hash_password(data.new_password)
+
+    if not db_user.tour_completed:
+        db_user.tour_completed = True
+
+    await db.commit()
+
+    return {"message": "Password changed successfully"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Send password reset link to email.
+    Always return success — don't reveal if email exists.
+    """
+
+    result = await db.execute(
+        select(User).where(User.email == data.email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        return {"message": "If email exists, reset link has been sent"}
+
+    token = str(uuid.uuid4())
+
+    await redis_client.setex(
+        f"reset:{token}",
+        3600,
+        str(user.id)
+    )
+
+    reset_link = f"http://localhost:5173/reset-password?token={token}"
+
+    send_reset_email.delay(
+        email=user.email,
+        first_name=user.first_name,
+        reset_link=reset_link
+    )
+
+    return {"message": "If email exists, reset link has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    data: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reset password using token from email link.
+    Token expires in 1 hour.
+    Token deleted after use — cannot reuse.
+    """
+
+    user_id = await redis_client.get(f"reset:{data.token}")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired reset link"
+        )
+
+    result = await db.execute(
+        select(User).where(User.id == uuid.UUID(user_id))
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.password_hash = hash_password(data.new_password)
+    await db.commit()
+
+    await redis_client.delete(f"reset:{data.token}")
+
+    return {"message": "Password reset successfully. Please login."}

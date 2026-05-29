@@ -355,3 +355,115 @@ async def activate_user(
     await db.commit()
     await db.refresh(target_user)
     return target_user
+
+
+# bulk invite users  
+import csv
+import io
+from fastapi import UploadFile, File
+
+@router.post("/bulk-invite")
+async def bulk_invite(
+    file: UploadFile = File(...),
+    user: CurrentUser = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Bulk invite users via CSV upload.
+    CSV format: first_name,last_name,email,role,job_title
+    Creates users and sends invite emails via Celery.
+    """
+
+    # Read CSV
+    content = await file.read()
+    csv_data = csv.DictReader(io.StringIO(content.decode("utf-8")))
+
+    # Check seat limit
+    count_result = await db.execute(
+        select(func.count()).where(
+            User.org_id == uuid.UUID(user.org_id),
+            User.is_active == True
+        )
+    )
+    current_count = count_result.scalar()
+
+    from app.models.organization import Organization
+    org_result = await db.execute(
+        select(Organization).where(
+            Organization.id == uuid.UUID(user.org_id)
+        )
+    )
+    org = org_result.scalar_one_or_none()
+
+    created = []
+    failed = []
+    temp_password = "Welcome@1234"  # Default temp password
+
+    for row in csv_data:
+        try:
+            email = row.get("email", "").strip()
+            first_name = row.get("first_name", "").strip()
+            last_name = row.get("last_name", "").strip()
+            role = row.get("role", "rep").strip()
+            job_title = row.get("job_title", "").strip()
+
+            if not email or not first_name:
+                failed.append({"email": email, "reason": "Missing required fields"})
+                continue
+
+            if role not in VALID_ROLES:
+                failed.append({"email": email, "reason": f"Invalid role: {role}"})
+                continue
+
+            # Check seat limit
+            if current_count >= org.max_users:
+                failed.append({"email": email, "reason": "Seat limit reached"})
+                continue
+
+            # Check email exists
+            email_check = await db.execute(
+                select(User).where(User.email == email)
+            )
+            if email_check.scalar_one_or_none():
+                failed.append({"email": email, "reason": "Email already exists"})
+                continue
+
+            # Create user
+            new_user = User(
+                id=uuid.uuid4(),
+                org_id=uuid.UUID(user.org_id),
+                email=email,
+                password_hash=hash_password(temp_password),
+                first_name=first_name,
+                last_name=last_name,
+                role=role,
+                job_title=job_title if job_title else None,
+                is_active=True,
+                tour_completed=False,
+                created_at=str(datetime.now(timezone.utc))
+            )
+            db.add(new_user)
+            current_count += 1
+            created.append(email)
+
+            # Send invite email via Celery
+            from app.tasks.email import send_invite_email
+            send_invite_email.delay(
+                email=email,
+                first_name=first_name,
+                company_name=org.name,
+                temp_password=temp_password
+            )
+
+        except Exception as e:
+            failed.append({"email": row.get("email"), "reason": str(e)})
+
+    await db.commit()
+
+    return {
+        "message": f"Bulk invite complete",
+        "created": len(created),
+        "failed": len(failed),
+        "created_emails": created,
+        "failed_details": failed
+    }

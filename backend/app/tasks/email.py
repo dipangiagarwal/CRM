@@ -109,3 +109,26 @@ def send_expiry_reminder(email: str, company_name: str, days_left: int):
             <p>Team Pixel CRM</p>
         """
     )
+
+ # send reset email 
+@celery_app.task(name="app.tasks.email.send_reset_email")
+def send_reset_email(email: str, first_name: str, reset_link: str):
+    """Send password reset link email."""
+    send_email(
+        to_email=email,
+        subject="Reset your Pixel CRM password",
+        html_content=f"""
+            <h1>Reset Password 🔐</h1>
+            <p>Hello {first_name},</p>
+            <p>Click below to reset your password:</p>
+            <a href="{reset_link}" 
+               style="background:#4F46E5;color:white;padding:12px 24px;
+                      border-radius:6px;text-decoration:none;">
+               Reset Password
+            </a>
+            <p>Link expires in 1 hour.</p>
+            <p>If you didn't request this, ignore this email.</p>
+            <br>
+            <p>Team Pixel CRM</p>
+        """
+    )

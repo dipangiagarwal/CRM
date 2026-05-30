@@ -13,7 +13,7 @@ from app.schemas.activity import ActivityCreate, ActivityUpdate, ActivityRespons
 
 router = APIRouter(prefix="/activities", tags=["Activities"])
 
-VALID_TYPES = ["call", "email", "note", "meeting", "task"]
+VALID_TYPES = ["call", "email", "note", "meeting", "task", "message"]
 
 
 @router.post("/create_activity", status_code=status.HTTP_201_CREATED, response_model=ActivityResponse)

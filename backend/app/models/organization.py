@@ -26,6 +26,7 @@ class Organization(Base):
         "whatsapp": False,
         "email": False,
     })
+    logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(
         Text, default=lambda: str(uuid.uuid4())
     )

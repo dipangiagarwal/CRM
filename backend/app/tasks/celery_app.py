@@ -27,9 +27,16 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.subscription.check_expiring_subscriptions",
         "schedule": crontab(hour=9, minute=0),
     },
+
     # Check and suspend expired orgs every day at midnight
     "suspend-expired-orgs": {
         "task": "app.tasks.subscription.suspend_expired_orgs",
         "schedule": crontab(hour=0, minute=0),
+    },
+
+    # ping database every day to make it awaken
+    "ping-database": {
+    "task": "app.tasks.subscription.ping_db",
+    "schedule": crontab(hour=12, minute=0),  # daily noon
     },
 }

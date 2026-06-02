@@ -77,3 +77,19 @@ async def _suspend_expired_orgs():
 
         await db.commit()
         print(f"Suspended {len(orgs)} organizations")
+
+
+
+# to ping database each day so that it doesn't get stopped 
+@celery_app.task(name="app.tasks.subscription.ping_db")
+def ping_db():
+    """
+    Ping DB every day to prevent Supabase from pausing.
+    Supabase pauses after 7 days of inactivity.
+    """
+    run_async(_ping_db())
+
+async def _ping_db():
+    async with AsyncSessionLocal() as db:
+        await db.execute(select(Organization).limit(1))
+        print("DB pinged — keeping Supabase active")

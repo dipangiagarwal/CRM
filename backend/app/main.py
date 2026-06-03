@@ -3,6 +3,8 @@
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+# from app.middleware.rate_limit import rate_limit_middleware
+# from starlette.middleware.base import BaseHTTPMiddleware
 from app.routers import auth, contacts, deals, activities, users, platform, billing, webhook, files, organizations
 from app.sockets.manager import sio
 
@@ -21,6 +23,8 @@ fastapi_app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# fastapi_app.add_middleware(BaseHTTPMiddleware, dispatch=rate_limit_middleware)
 
 # Routers
 fastapi_app.include_router(auth.router, prefix="/api/v1")

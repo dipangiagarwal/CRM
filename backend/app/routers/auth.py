@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from app.utils.rate_limit import rate_limit
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
@@ -53,11 +54,13 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
     )
 
 
+# @rate_limit("register")      these were not working
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
     data: RegisterRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit("register"))
 ):
     """
     Register a new organization and its first admin user.
@@ -142,11 +145,13 @@ async def register(
     }
 
 
+# @rate_limit("login")
 @router.post("/login")
 async def login(
     data: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit("login"))
 ):
     """
     Login with email + password.
@@ -303,12 +308,13 @@ async def logout(request: Request, response: Response):
 
     return {"message": "Logged out successfully"}
 
-
+# @rate_limit("change_password") 
 @router.post("/change-password")
 async def change_password(
     data: ChangePasswordRequest,
     user: CurrentUser = Depends(verify_token),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit("change_password")) 
 ):
     """
     Change password — called on first login or voluntary change.
@@ -336,10 +342,12 @@ async def change_password(
     return {"message": "Password changed successfully"}
 
 
+# @rate_limit("forgot_password")
 @router.post("/forgot-password")
 async def forgot_password(
     data: ForgotPasswordRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit("forgot_password")) 
 ):
     """
     Send password reset link to email.
@@ -373,10 +381,12 @@ async def forgot_password(
     return {"message": "If email exists, reset link has been sent"}
 
 
+# @rate_limit("reset_password")
 @router.post("/reset-password")
 async def reset_password(
     data: ResetPasswordRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit("reset_password")) 
 ):
     """
     Reset password using token from email link.

@@ -180,11 +180,22 @@ async def login(
     )
     org = org_result.scalar_one_or_none()
 
-    if not org or org.status == "suspended":
+    if not org:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your organization has been suspended. Contact support."
+            detail="Organization not found."
         )
+
+    if org.status == "suspended":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your organization has been suspended due to non-payment. Please renew your subscription."
+        )
+
+    # Grace period — allow login but return warning
+    grace_warning = None
+    if org.status == "grace":
+        grace_warning = f"Your subscription has expired. You have until {org.grace_until} to renew."
 
     user.last_login_at = str(datetime.now(timezone.utc))
     await db.commit()
@@ -209,7 +220,8 @@ async def login(
         "org_id": str(user.org_id),
         "role": user.role,
         "first_name": user.first_name,
-        "tour_completed": user.tour_completed
+        "tour_completed": user.tour_completed,
+        "grace_warning": grace_warning
     }
 
 

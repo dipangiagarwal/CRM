@@ -27,16 +27,19 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.subscription.check_expiring_subscriptions",
         "schedule": crontab(hour=9, minute=0),
     },
-
-    # Check and suspend expired orgs every day at midnight
-    "suspend-expired-orgs": {
-        "task": "app.tasks.subscription.suspend_expired_orgs",
+    # Move expired orgs to grace period — daily midnight
+    "update-grace-period": {
+        "task": "app.tasks.subscription.update_grace_period",
         "schedule": crontab(hour=0, minute=0),
     },
-
-    # ping database every day to make it awaken
+    # Suspend orgs past grace period — daily midnight
+    "suspend-expired-orgs": {
+        "task": "app.tasks.subscription.suspend_expired_orgs",
+        "schedule": crontab(hour=0, minute=1),
+    },
+    # Ping DB daily to prevent Supabase pause
     "ping-database": {
-    "task": "app.tasks.subscription.ping_db",
-    "schedule": crontab(hour=12, minute=0),  # daily noon
+        "task": "app.tasks.subscription.ping_db",
+        "schedule": crontab(hour=12, minute=0),
     },
 }

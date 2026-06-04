@@ -132,3 +132,41 @@ def send_reset_email(email: str, first_name: str, reset_link: str):
             <p>Team Pixel CRM</p>
         """
     )
+
+
+# send grace email
+@celery_app.task(name="app.tasks.email.send_grace_period_email")
+def send_grace_period_email(
+    email: str,
+    first_name: str,
+    company_name: str,
+    grace_until: str,
+    sub_end: str
+):
+    """Send grace period started notification email."""
+    send_email(
+        to_email=email,
+        subject=f"Action Required — {company_name} subscription has expired",
+        html_content=f"""
+            <h1>Your Subscription Has Expired ⚠️</h1>
+            <p>Hello {first_name},</p>
+            <p>Your Pixel CRM subscription for <strong>{company_name}</strong> 
+            has expired.</p>
+            <br>
+            <p><strong>Grace Period:</strong> You have until 
+            <strong>{grace_until}</strong> to renew.</p>
+            <br>
+            <p style="background:#FEF3C7;padding:12px;border-radius:6px;">
+            ⚠️ <strong>Important:</strong> Your new subscription period will 
+            start from <strong>{sub_end}</strong> (the day your subscription 
+            expired), not from the day of payment. You will not lose any days.
+            </p>
+            <br>
+            <p>After <strong>{grace_until}</strong>, your account will be 
+            suspended and you will lose access to all data.</p>
+            <br>
+            <p>Please renew immediately to avoid interruption.</p>
+            <br>
+            <p>Team Pixel CRM</p>
+        """
+    )

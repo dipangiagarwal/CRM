@@ -6,6 +6,8 @@ from app.database import get_db
 from app.middleware.auth import verify_token, require_admin, CurrentUser
 from app.models.organization import Organization
 from app.services.storage import upload_file
+from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
@@ -104,10 +106,105 @@ async def update_org(
         )
     )
     org = result.scalar_one_or_none()
-
     if name:
         org.name = name
+    await db.commit()
+    return {"message": "Organization updated successfully"}
+
+
+# onboarding flow
+class OnboardingRequest(BaseModel):
+    company_name: Optional[str] = None
+    industry: Optional[str] = None
+    company_size: Optional[str] = None
+
+
+VALID_INDUSTRIES = [
+    "technology", "finance", "healthcare", "education",
+    "retail", "manufacturing", "real_estate", "hospitality",
+    "logistics", "media", "consulting", "other"
+]
+
+VALID_SIZES = [
+    "1-10", "11-50", "51-200", "201-500", "500+"
+]
+
+
+@router.post("/onboarding")
+async def complete_onboarding(
+    data: OnboardingRequest,
+    user: CurrentUser = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Complete company onboarding — admin only.
+    Called after first login and password change.
+    Sets onboarding_completed = True.
+    All fields optional — admin can skip.
+    """
+    result = await db.execute(
+        select(Organization).where(
+            Organization.id == uuid.UUID(user.org_id)
+        )
+    )
+    org = result.scalar_one_or_none()
+
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    # Update only provided fields
+    if data.company_name:
+        org.name = data.company_name
+
+    if data.industry:
+        if data.industry not in VALID_INDUSTRIES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid industry. Choose from: {', '.join(VALID_INDUSTRIES)}"
+            )
+        org.industry = data.industry
+
+    if data.company_size:
+        if data.company_size not in VALID_SIZES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid size. Choose from: {', '.join(VALID_SIZES)}"
+            )
+        org.company_size = data.company_size
+
+    # Mark onboarding complete
+    org.onboarding_completed = True
 
     await db.commit()
 
-    return {"message": "Organization updated successfully"}
+    return {
+        "message": "Onboarding completed successfully",
+        "company_name": org.name,
+        "industry": org.industry,
+        "company_size": org.company_size,
+        "onboarding_completed": True
+    }
+
+
+@router.get("/onboarding/status")
+async def get_onboarding_status(
+    user: CurrentUser = Depends(verify_token),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Check if onboarding is completed.
+    Frontend checks this on every login.
+    """
+    result = await db.execute(
+        select(Organization).where(
+            Organization.id == uuid.UUID(user.org_id)
+        )
+    )
+    org = result.scalar_one_or_none()
+
+    return {
+        "onboarding_completed": org.onboarding_completed or False,
+        "company_name": org.name,
+        "industry": org.industry,
+        "company_size": org.company_size
+    }

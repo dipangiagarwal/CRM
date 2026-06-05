@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # from app.middleware.rate_limit import rate_limit_middleware
 # from starlette.middleware.base import BaseHTTPMiddleware
-from app.routers import auth, contacts, deals, activities, users, platform, billing, webhook, files, organizations, analytics
+from app.routers import auth, contacts, deals, activities, users, platform, billing, webhook, files, organizations, analytics, export
 from app.sockets.manager import sio
 
 # FastAPI app
@@ -38,6 +38,7 @@ fastapi_app.include_router(webhook.router, prefix="/api/v1")
 fastapi_app.include_router(files.router, prefix="/api/v1")
 fastapi_app.include_router(organizations.router, prefix="/api/v1")
 fastapi_app.include_router(analytics.router, prefix="/api/v1")
+fastapi_app.include_router(export.router, prefix="/api/v1")
 
 @fastapi_app.get("/health")
 async def health():

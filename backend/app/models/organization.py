@@ -27,6 +27,9 @@ class Organization(Base):
         "email": False,
     })
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    industry: Mapped[str | None] = mapped_column(Text, nullable=True)
+    company_size: Mapped[str | None] = mapped_column(Text, nullable=True)
+    onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
     created_at: Mapped[str] = mapped_column(
         Text, default=lambda: str(uuid.uuid4())
     )

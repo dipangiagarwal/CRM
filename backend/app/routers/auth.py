@@ -122,10 +122,8 @@ async def register(
         first_name=data.first_name,
         company_name=data.company_name
     )
-
     access_token = create_access_token(str(user.id), str(org.id), user.role)
     refresh_token = create_refresh_token(str(user.id))
-
     await set_session(str(user.id), {
         "email": user.email,
         "first_name": user.first_name,
@@ -168,24 +166,20 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been deactivated"
         )
-
     org_result = await db.execute(
         select(Organization).where(Organization.id == user.org_id)
     )
     org = org_result.scalar_one_or_none()
-
     if not org:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Organization not found."
         )
-
     if org.status == "suspended":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -221,7 +215,8 @@ async def login(
         "role": user.role,
         "first_name": user.first_name,
         "tour_completed": user.tour_completed,
-        "grace_warning": grace_warning
+        "grace_warning": grace_warning,
+        "onboarding_completed": org.onboarding_completed or False
     }
 
 

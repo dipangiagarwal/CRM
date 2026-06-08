@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from app.database import get_db
-from app.middleware.auth import verify_token, CurrentUser
+from app.middleware.auth import verify_token, CurrentUser, require_write_access
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/contacts", tags=["Contacts"])
 @router.post("/create_contacts", status_code=status.HTTP_201_CREATED, response_model=ContactResponse)
 async def create_contact(
     data: ContactCreate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -89,6 +89,8 @@ async def list_contacts(
     # Filters
     if lifecycle_stage:
         query = query.where(Contact.lifecycle_stage == lifecycle_stage)
+    else:
+        query = query.where(Contact.lifecycle_stage != "deleted")
     if owner_id:
         query = query.where(Contact.owner_id == uuid.UUID(owner_id))
     if source:
@@ -159,7 +161,7 @@ async def get_contact(
 async def update_contact(
     contact_id: str,
     data: ContactUpdate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -193,7 +195,7 @@ async def update_contact(
 @router.delete("/delete_contact_by_id/{contact_id}", status_code=status.HTTP_200_OK)
 async def delete_contact(
     contact_id: str,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """

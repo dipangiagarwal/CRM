@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
-from app.middleware.auth import verify_token, CurrentUser
+from app.middleware.auth import verify_token, CurrentUser, require_write_access
 from app.models.file import File as FileModel
 from app.schemas.file import FileResponse
 from app.services.storage import upload_file, get_file, delete_file
@@ -35,7 +35,7 @@ async def upload(
     file: UploadFile = File(...),
     contact_id: Optional[str] = Query(None),
     deal_id: Optional[str] = Query(None),
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -151,7 +151,7 @@ async def download_file(
 @router.delete("/delete_file/{file_id}")
 async def delete(
     file_id: str,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """

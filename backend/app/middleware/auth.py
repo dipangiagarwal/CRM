@@ -143,3 +143,13 @@ async def require_manager(user: CurrentUser = Depends(verify_token)) -> CurrentU
             detail="Manager access required"
         )
     return user
+
+
+async def require_write_access(user: CurrentUser = Depends(verify_token)) -> CurrentUser:
+    """Admin, manager, or rep can access. Viewers are blocked."""
+    if user.role == "viewer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You have view-only access. You cannot create, edit, or delete data."
+        )
+    return user

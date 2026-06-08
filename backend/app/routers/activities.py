@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
-from app.middleware.auth import verify_token, CurrentUser
+from app.middleware.auth import verify_token, CurrentUser, require_write_access
 from app.models.activity import Activity
 from app.models.contact import Contact
 from app.models.deal import Deal
@@ -19,7 +19,7 @@ VALID_TYPES = ["call", "email", "note", "meeting", "task", "message"]
 @router.post("/create_activity", status_code=status.HTTP_201_CREATED, response_model=ActivityResponse)
 async def create_activity(
     data: ActivityCreate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -164,7 +164,7 @@ async def get_activity(
 async def update_activity(
     activity_id: str,
     data: ActivityUpdate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """Update activity title or body only — type and contact cannot be changed."""
@@ -193,7 +193,7 @@ async def update_activity(
 @router.delete("/delete_activity_by_id/{activity_id}")
 async def delete_activity(
     activity_id: str,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """Hard delete for activities — logs are deletable unlike contacts/deals."""

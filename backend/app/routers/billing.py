@@ -12,6 +12,7 @@ from app.middleware.auth import verify_token, require_admin, CurrentUser
 from app.models.billing import Billing
 from app.models.organization import Organization
 from app.schemas.billing import CreateOrderRequest, BillingResponse
+from pydantic import BaseModel
 from app.config import settings
 
 router = APIRouter(prefix="/billing", tags=["Billing"])
@@ -93,6 +94,55 @@ async def create_order(
     }
 
 
+class VerifyPaymentRequest(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
+
+@router.post("/verify-payment")
+async def verify_payment(
+    data: VerifyPaymentRequest,
+    user: CurrentUser = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Verify signature synchronously for fast frontend update.
+    """
+    client = razorpay.Client(
+        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+    )
+    try:
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': data.razorpay_order_id,
+            'razorpay_payment_id': data.razorpay_payment_id,
+            'razorpay_signature': data.razorpay_signature
+        })
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    billing_result = await db.execute(
+        select(Billing).where(Billing.razorpay_order_id == data.razorpay_order_id)
+    )
+    billing = billing_result.scalar_one_or_none()
+    if not billing:
+        raise HTTPException(status_code=404, detail="Billing record not found")
+
+    if billing.status == "paid":
+        return {"status": "already_verified"}
+
+    # Activate
+    from app.routers.webhook import activate_subscription
+    await activate_subscription(
+        tenant_id=user.org_id,
+        amount=int(billing.amount * 100),
+        plan=billing.plan,
+        payment_id=data.razorpay_payment_id,
+        order_id=data.razorpay_order_id
+    )
+
+    return {"status": "success"}
+
+
 @router.get("/history", response_model=list[BillingResponse])
 async def billing_history(
     user: CurrentUser = Depends(verify_token),
@@ -101,7 +151,8 @@ async def billing_history(
     """Get all billing records for this org."""
     result = await db.execute(
         select(Billing).where(
-            Billing.org_id == uuid.UUID(user.org_id)
+            Billing.org_id == uuid.UUID(user.org_id),
+            Billing.status != 'pending'
         ).order_by(Billing.created_at.desc())
     )
     records = result.scalars().all()

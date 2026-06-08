@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
-from app.middleware.auth import verify_token, CurrentUser
+from app.middleware.auth import verify_token, CurrentUser, require_write_access
 from app.models.deal import Deal
 from app.models.contact import Contact
 from app.schemas.deal import DealCreate, DealUpdate, DealStageUpdate, DealResponse
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/deals", tags=["Deals"])
 @router.post("/create_deal", status_code=status.HTTP_201_CREATED, response_model=DealResponse)
 async def create_deal(
     data: DealCreate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -85,6 +85,8 @@ async def list_deals(
 
     if stage:
         query = query.where(Deal.stage == stage)
+    else:
+        query = query.where(Deal.stage != "deleted")
     if owner_id:
         query = query.where(Deal.owner_id == uuid.UUID(owner_id))
     if contact_id:
@@ -149,7 +151,7 @@ async def get_deal(
 async def update_deal(
     deal_id: str,
     data: DealUpdate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """Update deal fields — only provided fields updated."""
@@ -179,7 +181,7 @@ async def update_deal(
 async def update_deal_stage(
     deal_id: str,
     data: DealStageUpdate,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -242,7 +244,7 @@ async def update_deal_stage(
 @router.delete("/delete_deal_by_id/{deal_id}")
 async def delete_deal(
     deal_id: str,
-    user: CurrentUser = Depends(verify_token),
+    user: CurrentUser = Depends(require_write_access),
     db: AsyncSession = Depends(get_db)
 ):
     """Soft delete — mark stage as lost instead of removing from DB."""

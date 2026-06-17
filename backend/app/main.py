@@ -6,6 +6,7 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from app.middleware.auth import verify_token, CurrentUser
+from app.config import settings
 # from app.middleware.rate_limit import rate_limit_middleware
 # from starlette.middleware.base import BaseHTTPMiddleware
 from app.routers import auth, contacts, deals, activities, users, platform, billing, webhook, files, organizations, analytics, export

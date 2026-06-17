@@ -6,7 +6,7 @@ let socket: Socket | null = null;
 export const connectSocket = () => {
   if (socket?.connected) return socket;
 
-  socket = io('http://localhost:8000', {
+  socket = io('https://crm-3-p5xh.onrender.com', {
     withCredentials: true,
     transports: ['websocket', 'polling'],
   });

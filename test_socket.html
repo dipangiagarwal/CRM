@@ -12,7 +12,7 @@
         // Replace with your actual token after login
         const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZTZmMTI1YS03NjgzLTRhYmUtYTc3Yy03YjllMTJmYjI4YTciLCJvcmdfaWQiOiI1MTFhYjJjZC1lZjMwLTQzYmQtOTIzNC04NGU2ODFjMDcwY2MiLCJyb2xlIjoiYWRtaW4iLCJ0eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc5OTQ2NjA2fQ.9Hdj68VIs-QPfPtMmjIOD3YRA3shAOG07NDxl2e1T6c"
 
-        const socket = io("http://localhost:8000", {
+        const socket = io("https://crm-3-p5xh.onrender.com", {
             auth: { token: token }
         })
 

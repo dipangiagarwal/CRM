@@ -3,7 +3,7 @@
 I have completely implemented the CRM frontend based on modern designs (inspired by Salesforce, HubSpot, Zoho, and Odoo), utilizing React, TypeScript, Tailwind CSS, and Zustand. 
 
 > [!NOTE]
-> The backend remains completely untouched, as requested. The frontend proxy points to `http://localhost:8000/api/v1` to communicate with the existing backend APIs.
+> The backend remains completely untouched, as requested. The frontend proxy points to `https://crm-3-p5xh.onrender.com/api/v1` to communicate with the existing backend APIs.
 
 Here is a summary of the implementation:
 
@@ -51,4 +51,4 @@ Here is a summary of the implementation:
 The code successfully passes all strict TypeScript compilation checks (`tsc -b`), builds successfully, and the local dev server is running. You can navigate the UI by visiting your local port. 
 
 > [!TIP]
-> The frontend dev server is running. Visit `http://localhost:5173` (or the local port provided in your terminal) to experience the UI. Since it relies on the backend, ensure your backend server is running on `http://localhost:8000`.
+> The frontend dev server is running. Visit `http://localhost:5173` (or the local port provided in your terminal) to experience the UI. Since it relies on the backend, ensure your backend server is running on `https://crm-3-p5xh.onrender.com`.

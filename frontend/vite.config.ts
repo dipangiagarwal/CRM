@@ -14,11 +14,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://crm-3-p5xh.onrender.com',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:8000',
+        target: 'https://crm-3-p5xh.onrender.com',
         changeOrigin: true,
         ws: true,
       },

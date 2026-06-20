@@ -4,7 +4,7 @@
 
 Build a **production-grade CRM frontend** in the `e:\pixel_crm\frontend` directory using **React 18 + TypeScript + Tailwind CSS v3 + Zustand**. The UI will be modeled after Salesforce, HubSpot, Zoho, and Odoo — dark-themed, premium, and data-rich.
 
-The backend runs at `http://localhost:8000` with `httpOnly` cookie-based auth (no localStorage tokens needed).
+The backend runs at `https://crm-3-p5xh.onrender.com` with `httpOnly` cookie-based auth (no localStorage tokens needed).
 
 ---
 
@@ -243,7 +243,7 @@ All files listed in the directory structure above.
 
 #### Key files:
 - `package.json` — all deps
-- `vite.config.ts` — proxy `/api` → `http://localhost:8000`
+- `vite.config.ts` — proxy `/api` → `https://crm-3-p5xh.onrender.com`
 - `tailwind.config.ts` — custom dark theme colors
 - `src/index.css` — Tailwind directives + custom CSS
 - `src/api/axios.ts` — Axios instance with interceptors + refresh logic
@@ -277,7 +277,7 @@ All files listed in the directory structure above.
 > **Currency**: Backend stores `value` in plain numbers. Should I display as **₹ (INR)** everywhere since billing uses Razorpay/INR? I'll default to ₹.
 
 > [!NOTE]
-> **Socket.io**: The backend mounts socket.io at the same port (8000). I'll connect to `http://localhost:8000` with socket.io-client.
+> **Socket.io**: The backend mounts socket.io at the same port (8000). I'll connect to `https://crm-3-p5xh.onrender.com` with socket.io-client.
 
 > [!NOTE]
 > **Razorpay**: I'll integrate the Razorpay checkout modal on the Billing page. The `razorpay_key` is returned from the backend create-order endpoint.

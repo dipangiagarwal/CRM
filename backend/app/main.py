@@ -45,7 +45,10 @@ async def openapi():
 # ✅ CORS fix — wildcard for now
 fastapi_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # baad mein FRONTEND_URL se replace karna
+    allow_origins=[
+        "https://crm-olive-seven-28.vercel.app",
+        "http://localhost:5173",  # local dev ke liye
+    ],  # baad mein FRONTEND_URL se replace karna
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

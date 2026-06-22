@@ -2,10 +2,10 @@ from fastapi import HTTPException, status, Request, Depends
 from app.utils.redis import redis_client
 
 RATE_LIMITS = {
-    "login": (3, 60),
-    "register": (3, 3600),
-    "forgot_password": (3, 3600),
-    "change_password": (10, 3600),
+    "login": (5, 120),
+    "register": (5, 120),
+    "forgot_password": (3, 120),
+    "change_password": (10, 120),
     "default": (200, 3600),
     "reset_password": (5, 60),
 }

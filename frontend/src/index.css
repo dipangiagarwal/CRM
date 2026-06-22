@@ -1,5 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+:root {
+  /* Light mode colors */
+  --color-bg: #F3F4F6;
+  --color-bg-card: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-hover: #E5E7EB;
+  --color-surface: #FFFFFF;
+  --color-surface-border: #E5E7EB;
+  --color-surface-muted: #D1D5DB;
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6B7280;
+  --color-text-disabled: #9CA3AF;
+}
+
+.dark {
+  /* Dark mode colors — wahi purani values jo abhi tak use ho rahi thi */
+  --color-bg: #0F1117;
+  --color-bg-card: #1A1D27;
+  --color-bg-elevated: #242736;
+  --color-bg-hover: #2D3149;
+  --color-surface: #1A1D27;
+  --color-surface-border: #2D3149;
+  --color-surface-muted: #374151;
+  --color-text-primary: #F9FAFB;
+  --color-text-secondary: #D1D5DB;
+  --color-text-muted: #9CA3AF;
+  --color-text-disabled: #6B7280;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -42,7 +72,6 @@
 }
 
 @layer components {
-  /* Card styles */
   .card {
     @apply bg-bg-card rounded-xl border border-surface-border shadow-card;
   }
@@ -51,7 +80,6 @@
     @apply bg-bg-elevated rounded-xl border border-surface-border shadow-elevated;
   }
 
-  /* Button base */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-bg disabled:opacity-50 disabled:cursor-not-allowed;
   }
@@ -84,12 +112,10 @@
     @apply px-6 py-3 text-base;
   }
 
-  /* Badge */
   .badge {
     @apply inline-flex items-center gap-1 rounded-full text-xs font-medium px-2.5 py-0.5;
   }
 
-  /* Input field */
   .input-field {
     @apply w-full rounded-lg border border-surface-border bg-bg-elevated px-3 py-2 text-sm text-text-primary placeholder-text-disabled focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors;
   }
@@ -98,12 +124,10 @@
     @apply block text-sm font-medium text-text-secondary mb-1.5;
   }
 
-  /* Table */
   .table-row-hover {
     @apply hover:bg-bg-hover transition-colors cursor-pointer;
   }
 
-  /* Sidebar nav item */
   .nav-item {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all duration-150 cursor-pointer;
   }
@@ -112,12 +136,10 @@
     @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-400 bg-primary-500/10 border border-primary-500/20;
   }
 
-  /* Status dot */
   .status-dot {
     @apply w-2 h-2 rounded-full;
   }
 
-  /* Skeleton loader */
   .skeleton {
     @apply bg-bg-elevated animate-pulse rounded;
   }

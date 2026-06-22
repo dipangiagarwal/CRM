@@ -4,6 +4,7 @@ import { Bell, Search, Plus, ChevronDown, LogOut, Settings } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../api/auth';
 import { getInitials } from '../../utils/helpers';
+import { ThemeToggle } from '../../components/ThemeToggle';
 
 export const TopBar: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -32,6 +33,7 @@ export const TopBar: React.FC = () => {
 
       <div className="flex items-center gap-3 ml-auto">
         {/* Quick Add */}
+        <ThemeToggle />
         <button
           onClick={() => navigate('/contacts/new')}
           className="btn-primary btn-sm hidden sm:flex"

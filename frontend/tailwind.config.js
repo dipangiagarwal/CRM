@@ -8,10 +8,10 @@ export default {
     extend: {
       colors: {
         bg: {
-          DEFAULT: '#0F1117',
-          card: '#1A1D27',
-          elevated: '#242736',
-          hover: '#2D3149',
+          DEFAULT: 'var(--color-bg)',
+          card: 'var(--color-bg-card)',
+          elevated: 'var(--color-bg-elevated)',
+          hover: 'var(--color-bg-hover)',
         },
         primary: {
           50: '#EEF2FF',
@@ -26,15 +26,15 @@ export default {
           900: '#312E81',
         },
         surface: {
-          DEFAULT: '#1A1D27',
-          border: '#2D3149',
-          muted: '#374151',
+          DEFAULT: 'var(--color-surface)',
+          border: 'var(--color-surface-border)',
+          muted: 'var(--color-surface-muted)',
         },
         text: {
-          primary: '#F9FAFB',
-          secondary: '#D1D5DB',
-          muted: '#9CA3AF',
-          disabled: '#6B7280',
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
+          disabled: 'var(--color-text-disabled)',
         },
         deal: {
           new: '#6366F1',

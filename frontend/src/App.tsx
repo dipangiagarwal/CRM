@@ -36,6 +36,7 @@ import { PlatformAdminLayout } from './pages/platform/PlatformAdminLayout';
 import { PlatformDashboard } from './pages/platform/PlatformDashboard';
 import { PlatformOrganizations } from './pages/platform/PlatformOrganizations';
 import { PlatformOrgDetail } from './pages/platform/PlatformOrgDetail';
+import { ThemeProvider } from './context/ThemeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,69 +84,71 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-          <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Onboarding — protected but not app-layout */}
-          <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
-          <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+            {/* Onboarding — protected but not app-layout */}
+            <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
-          {/* Main App */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
+            {/* Main App */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
 
-            {/* Contacts */}
-            <Route path="contacts" element={<ContactsPage />} />
-            <Route path="contacts/new" element={<ContactsPage />} />
-            <Route path="contacts/:id" element={<ContactDetailPage />} />
+              {/* Contacts */}
+              <Route path="contacts" element={<ContactsPage />} />
+              <Route path="contacts/new" element={<ContactsPage />} />
+              <Route path="contacts/:id" element={<ContactDetailPage />} />
 
-            {/* Deals */}
-            <Route path="deals" element={<DealsKanbanPage />} />
-            <Route path="deals/:id" element={<DealDetailPage />} />
+              {/* Deals */}
+              <Route path="deals" element={<DealsKanbanPage />} />
+              <Route path="deals/:id" element={<DealDetailPage />} />
 
-            {/* Activities */}
-            <Route path="activities" element={<ActivitiesPage />} />
+              {/* Activities */}
+              <Route path="activities" element={<ActivitiesPage />} />
 
-            {/* Reports */}
-            <Route path="reports" element={<ReportsPage />} />
+              {/* Reports */}
+              <Route path="reports" element={<ReportsPage />} />
 
-            {/* Team — admin only */}
-            <Route path="team" element={<AdminRoute><TeamPage /></AdminRoute>} />
+              {/* Team — admin only */}
+              <Route path="team" element={<AdminRoute><TeamPage /></AdminRoute>} />
 
-            {/* Billing — admin only */}
-            <Route path="billing" element={<AdminRoute><BillingPage /></AdminRoute>} />
+              {/* Billing — admin only */}
+              <Route path="billing" element={<AdminRoute><BillingPage /></AdminRoute>} />
 
-            {/* Settings */}
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
+              {/* Settings */}
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
 
-          {/* Platform Admin */}
-          <Route path="/platform-admin/login" element={<PlatformAdminLogin />} />
-          <Route path="/platform-admin" element={<PlatformAdminLayout />}>
-            <Route index element={<PlatformDashboard />} />
-            <Route path="organizations" element={<PlatformOrganizations />} />
-            <Route path="organizations/:id" element={<PlatformOrgDetail />} />
-          </Route>
+            {/* Platform Admin */}
+            <Route path="/platform-admin/login" element={<PlatformAdminLogin />} />
+            <Route path="/platform-admin" element={<PlatformAdminLayout />}>
+              <Route index element={<PlatformDashboard />} />
+              <Route path="organizations" element={<PlatformOrganizations />} />
+              <Route path="organizations/:id" element={<PlatformOrgDetail />} />
+            </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

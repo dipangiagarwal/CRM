@@ -40,16 +40,16 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=settings.ENVIRONMENT == "production",
-        samesite="strict",
+        secure=True,
+        samesite="none",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=settings.ENVIRONMENT == "production",
-        samesite="strict",
+        secure=True,
+        samesite="none",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
 
@@ -282,8 +282,8 @@ async def refresh_token(
         key="access_token",
         value=new_access_token,
         httponly=True,
-        secure=settings.ENVIRONMENT == "production",
-        samesite="strict",
+        secure=True,
+        samesite="none",  # "strict" is used when we have same domain for both frontend and backend
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 

@@ -8,7 +8,11 @@ from app.config import settings
 redis_client = aioredis.from_url(
     settings.REDIS_URL,
     encoding="utf-8",
-    decode_responses=True
+    decode_responses=True,
+    health_check_interval=30,      # connection ko periodically check karega, dead hone se pehle refresh
+    socket_connect_timeout=5,
+    socket_keepalive=True,
+    retry_on_timeout=True,
 )
 
 async def set_session(user_id: str, data: dict, expire_seconds: int = 900):

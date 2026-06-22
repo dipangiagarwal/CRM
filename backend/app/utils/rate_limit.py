@@ -26,22 +26,24 @@ def rate_limit(limit_key: str):
     async def check(request: Request):
         ip = request.client.host if request.client else "unknown"
         key = f"rl:{limit_key}:{ip}"
-
         limit, window = RATE_LIMITS.get(limit_key, RATE_LIMITS["default"])
 
-        current = await redis_client.incr(key)
-
-        if current == 1:
-            await redis_client.expire(key, window)
-
-        if current > limit:
-            ttl = await redis_client.ttl(key)
-            message = RATE_LIMIT_MESSAGES.get(
-                limit_key, RATE_LIMIT_MESSAGES["default"]
-            )
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=message.format(ttl=ttl)
-            )
+        try:
+            current = await redis_client.incr(key)
+            if current == 1:
+                await redis_client.expire(key, window)
+            if current > limit:
+                ttl = await redis_client.ttl(key)
+                message = RATE_LIMIT_MESSAGES.get(
+                    limit_key, RATE_LIMIT_MESSAGES["default"]
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=message.format(ttl=ttl)
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
 
     return check

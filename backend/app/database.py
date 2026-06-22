@@ -18,7 +18,8 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     # connect_args={"ssl": ssl_context},   # in production
     connect_args={
-        "ssl": False  # Disable SSL completely for now
+        "ssl": False,
+        "statement_cache_size": 0  # Disable SSL completely for now
     },
     echo=settings.ENVIRONMENT == "development",
     pool_size=15,

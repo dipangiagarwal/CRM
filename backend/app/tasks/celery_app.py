@@ -1,6 +1,7 @@
 from celery import Celery
 from celery.schedules import crontab
 from app.config import settings
+import ssl
 
 celery_app = Celery(
     "pixel_crm",
@@ -18,6 +19,8 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="Asia/Kolkata",
     enable_utc=True,
+    broker_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
+    redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
 )
 
 # Scheduled tasks — run automatically

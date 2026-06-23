@@ -1,34 +1,24 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
+from app.tasks.celery_app import celery_app
+from app.config import settings
+
+resend.api_key = settings.RESEND_API_KEY
 
 
 def send_email(to_email: str, subject: str, html_content: str):
-    """Send email via Gmail SMTP"""
+    """Send email via Resend API (HTTPS — Render free tier compatible)"""
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = settings.GMAIL_USER
-        msg["To"] = to_email
-
-        html_part = MIMEText(html_content, "html")
-        msg.attach(html_part)
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(settings.GMAIL_USER, settings.GMAIL_APP_PASSWORD)
-            server.sendmail(settings.GMAIL_USER, to_email, msg.as_string())
-
+        resend.Emails.send({
+            "from": "Pixel CRM <onboarding@resend.dev>",
+            "to": to_email,
+            "subject": subject,
+            "html": html_content,
+        })
         print(f"Email sent → {to_email}")
         return True
     except Exception as e:
         print(f"Email failed → {to_email}: {str(e)}")
         return False
-
-# import resend
-from app.tasks.celery_app import celery_app
-from app.config import settings
-
-# resend.api_key = settings.RESEND_API_KEY
 
 
 @celery_app.task(name="app.tasks.email.send_welcome_email")
@@ -122,7 +112,8 @@ def send_expiry_reminder(email: str, company_name: str, days_left: int):
         """
     )
 
- # send reset email 
+
+# send reset email
 @celery_app.task(name="app.tasks.email.send_reset_email")
 def send_reset_email(email: str, first_name: str, reset_link: str):
     """Send password reset link email."""

@@ -31,7 +31,7 @@ def send_welcome_email(email: str, first_name: str, company_name: str):
             <p>Your CRM for <strong>{company_name}</strong> is ready.</p>
             <p>Login and start managing your contacts and deals.</p>
             <br>
-            f'<a href="{settings.FRONTEND_URL}/login" ...>'
+            <a href="{settings.FRONTEND_URL}/login" ...>
                style="background:#4F46E5;color:white;padding:12px 24px;
                       border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:12px;">
                Access Your Dashboard
@@ -59,7 +59,7 @@ def send_invite_email(
             <p>Email: {email}</p>
             <p>Password: {temp_password}</p>
             <br>
-            f'<a href="{settings.FRONTEND_URL}/login" ...>'    
+            <a href="{settings.FRONTEND_URL}/login" ...>
                style="background:#4F46E5;color:white;padding:12px 24px;
                       border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:12px;">
                Login to Pixel CRM

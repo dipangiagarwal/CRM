@@ -4,7 +4,7 @@ from app.config import settings
 
 resend.api_key = settings.RESEND_API_KEY
 
-
+# only send_email function will be changed if in case any new service platform is used other than resend.com
 def send_email(to_email: str, subject: str, html_content: str):
     """Send email via Resend API (HTTPS — Render free tier compatible)"""
     try:
@@ -31,7 +31,7 @@ def send_welcome_email(email: str, first_name: str, company_name: str):
             <p>Your CRM for <strong>{company_name}</strong> is ready.</p>
             <p>Login and start managing your contacts and deals.</p>
             <br>
-            <a href="http://localhost:5173/login" 
+            f'<a href="{settings.FRONTEND_URL}/login" ...>'
                style="background:#4F46E5;color:white;padding:12px 24px;
                       border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:12px;">
                Access Your Dashboard

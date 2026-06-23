@@ -59,7 +59,7 @@ def send_invite_email(
             <p>Email: {email}</p>
             <p>Password: {temp_password}</p>
             <br>
-            <a href="http://localhost:5173/login" 
+            f'<a href="{settings.FRONTEND_URL}/login" ...>'    
                style="background:#4F46E5;color:white;padding:12px 24px;
                       border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:12px;">
                Login to Pixel CRM

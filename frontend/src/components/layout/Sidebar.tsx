@@ -22,7 +22,7 @@ import { clsx } from 'clsx';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/contacts',  icon: Users,           label: 'Contacts' },
+  { to: '/contacts',  icon: Users,           label: 'Leads' },
   { to: '/deals',     icon: Briefcase,        label: 'Sales Pipeline' },
   { to: '/activities',icon: Activity,         label: 'Activities' },
   { to: '/reports',   icon: BarChart3,        label: 'Reports' },

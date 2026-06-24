@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
-from app.middleware.auth import verify_token, CurrentUser, require_write_access
+from app.middleware.auth import verify_token, CurrentUser, require_write_access, can_assign
 from app.models.deal import Deal
 from app.models.contact import Contact
 from app.schemas.deal import DealCreate, DealUpdate, DealStageUpdate, DealResponse, DealAssign
@@ -248,10 +248,10 @@ async def assign_deal(
     db: AsyncSession = Depends(get_db)
 ):
     """Reassign a deal to a different user. Admin/Manager only."""
-    if user.role not in ["admin", "manager"]:
+    if not can_assign(user.role):
         raise HTTPException(
             status_code=403,
-            detail="Only admin or manager can reassign deals"
+            detail="Only managers and above can reassign deals"
         )
 
     result = await db.execute(

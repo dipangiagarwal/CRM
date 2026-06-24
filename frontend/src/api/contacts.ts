@@ -16,4 +16,7 @@ export const contactsApi = {
 
   delete: (id: string) =>
     api.delete(`/contacts/delete_contact_by_id/${id}`).then((r) => r.data),
+
+  assign: (id: string, owner_id: string) =>
+    api.patch(`/contacts/${id}/assign`, { owner_id }).then((r) => r.data),
 };

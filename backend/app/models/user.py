@@ -22,6 +22,7 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     tour_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    department: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_login_at: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str | None] = mapped_column(Text, nullable=True)
 

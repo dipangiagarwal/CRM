@@ -9,6 +9,41 @@ from app.utils.redis import get_session, set_session
 from app.models.user import User
 from app.models.organization import Organization
 
+# ─── Role Hierarchy ───────────────────────────────────────────────────────────
+# Numeric levels used for permission comparisons.
+# Higher number = more privileged.
+# "rep" kept as a backward-compat alias for "executive" (same level).
+# "developer" is lateral to "manager" — can write data/integrations but
+# cannot manage users or reassign records (handled by can_assign() below).
+
+ROLE_HIERARCHY: dict[str, int] = {
+    "viewer":      1,
+    "executive":   2,
+    "rep":         2,   # backward-compat alias — existing DB rows unchanged
+    "developer":   3,
+    "manager":     3,
+    "admin":       4,
+    "super_admin": 5,
+}
+
+
+def can_assign(role: str) -> bool:
+    """
+    Returns True if the user may reassign contacts or deals to other users.
+    Requires manager-level (3) or above, EXCLUDING developer (lateral role).
+    """
+    if role == "developer":
+        return False
+    return ROLE_HIERARCHY.get(role, 0) >= 3
+
+
+def is_senior_to(actor_role: str, target_role: str) -> bool:
+    """Returns True if actor outranks target in the hierarchy."""
+    return ROLE_HIERARCHY.get(actor_role, 0) > ROLE_HIERARCHY.get(target_role, 0)
+
+
+# ─── CurrentUser ─────────────────────────────────────────────────────────────
+
 class CurrentUser:
     """Represents the authenticated user on every request"""
     def __init__(self, user_id: str, org_id: str, role: str,
@@ -19,6 +54,7 @@ class CurrentUser:
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
+
 
 async def verify_token(
     request: Request,
@@ -126,8 +162,8 @@ async def verify_token(
 
 
 async def require_admin(user: CurrentUser = Depends(verify_token)) -> CurrentUser:
-    """Only org admin or platform admin can access"""
-    if user.role not in ["admin", "platform_admin"]:
+    """Only admin (level 4+) or super_admin can access."""
+    if ROLE_HIERARCHY.get(user.role, 0) < 4:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
@@ -136,8 +172,8 @@ async def require_admin(user: CurrentUser = Depends(verify_token)) -> CurrentUse
 
 
 async def require_manager(user: CurrentUser = Depends(verify_token)) -> CurrentUser:
-    """Manager, admin, or platform admin can access"""
-    if user.role not in ["manager", "admin", "platform_admin"]:
+    """Manager-level and above (level 3+) can access. Includes manager, developer, admin, super_admin."""
+    if ROLE_HIERARCHY.get(user.role, 0) < 3:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Manager access required"
@@ -146,8 +182,8 @@ async def require_manager(user: CurrentUser = Depends(verify_token)) -> CurrentU
 
 
 async def require_write_access(user: CurrentUser = Depends(verify_token)) -> CurrentUser:
-    """Admin, manager, or rep can access. Viewers are blocked."""
-    if user.role == "viewer":
+    """Anyone above viewer (level 2+) can create, edit, or delete data."""
+    if ROLE_HIERARCHY.get(user.role, 0) < 2:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You have view-only access. You cannot create, edit, or delete data."

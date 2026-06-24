@@ -14,7 +14,7 @@ from app.sockets.manager import emit_to_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-VALID_ROLES = ["admin", "manager", "rep", "viewer"]
+VALID_ROLES = ["super_admin", "admin", "manager", "developer", "executive", "rep", "viewer"]
 
 
 @router.get("/list_all_users", response_model=list[UserResponse])
@@ -98,6 +98,7 @@ async def invite_user(
         last_name=data.last_name,
         role=data.role,
         job_title=data.job_title,
+        department=data.department if hasattr(data, 'department') else None,
         is_active=True,
         tour_completed=False,
         created_at=str(datetime.now(timezone.utc))
@@ -428,6 +429,8 @@ async def bulk_invite(
                 failed.append({"email": email, "reason": "Email already exists"})
                 continue
 
+            department = row.get("department", "").strip()
+
             # Create user
             new_user = User(
                 id=uuid.uuid4(),
@@ -438,6 +441,7 @@ async def bulk_invite(
                 last_name=last_name,
                 role=role,
                 job_title=job_title if job_title else None,
+                department=department if department else None,
                 is_active=True,
                 tour_completed=False,
                 created_at=str(datetime.now(timezone.utc))

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from app.database import get_db
-from app.middleware.auth import verify_token, CurrentUser, require_write_access
+from app.middleware.auth import verify_token, CurrentUser, require_write_access, can_assign
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, ContactAssign
 
@@ -237,10 +237,10 @@ async def assign_contact(
     Reassign a contact to a different user.
     Only admin and manager can reassign.
     """
-    if user.role not in ["admin", "manager"]:
+    if not can_assign(user.role):
         raise HTTPException(
             status_code=403,
-            detail="Only admin or manager can reassign contacts"
+            detail="Only managers and above can reassign contacts"
         )
 
     result = await db.execute(

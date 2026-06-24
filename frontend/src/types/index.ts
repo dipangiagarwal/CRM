@@ -27,7 +27,14 @@ export interface AuthResponse {
 
 // ─── User ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'manager' | 'rep' | 'viewer';
+export type UserRole =
+  | 'super_admin'
+  | 'admin'
+  | 'manager'
+  | 'developer'
+  | 'executive'
+  | 'rep'
+  | 'viewer';
 
 export interface User {
   id: string;
@@ -37,6 +44,7 @@ export interface User {
   last_name: string;
   role: UserRole;
   job_title: string | null;
+  department: string | null;
   avatar_url: string | null;
   is_active: boolean;
   tour_completed: boolean;
@@ -50,6 +58,7 @@ export interface UserInvite {
   last_name: string;
   role: UserRole;
   job_title?: string;
+  department?: string;
   password: string;
 }
 

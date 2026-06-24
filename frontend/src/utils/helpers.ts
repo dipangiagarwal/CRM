@@ -143,11 +143,34 @@ export const ACTIVITY_COLORS: Record<string, string> = {
 // ─── Role ─────────────────────────────────────────────────────────────────────
 
 export const ROLE_COLORS: Record<string, string> = {
-  admin: 'text-primary-400 bg-primary-500/10 border-primary-500/30',
-  manager: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-  rep: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-  viewer: 'text-gray-400 bg-gray-500/10 border-gray-500/30',
+  super_admin: 'text-red-400 bg-red-500/10 border-red-500/30',
+  admin:       'text-primary-400 bg-primary-500/10 border-primary-500/30',
+  manager:     'text-blue-400 bg-blue-500/10 border-blue-500/30',
+  developer:   'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
+  executive:   'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+  rep:         'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+  viewer:      'text-gray-400 bg-gray-500/10 border-gray-500/30',
 };
+
+export const ROLE_LABELS: Record<string, string> = {
+  super_admin: 'Super Admin',
+  admin:       'Admin',
+  manager:     'Manager',
+  developer:   'Developer',
+  executive:   'Executive',
+  rep:         'Rep',
+  viewer:      'Read-Only',
+};
+
+export const DEPARTMENTS = [
+  'Sales',
+  'Marketing',
+  'Operations',
+  'Engineering',
+  'Management',
+  'Support',
+];
+
 
 // ─── Lead Score ───────────────────────────────────────────────────────────────
 

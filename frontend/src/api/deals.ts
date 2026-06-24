@@ -19,4 +19,7 @@ export const dealsApi = {
 
   delete: (id: string) =>
     api.delete(`/deals/delete_deal_by_id/${id}`).then((r) => r.data),
+
+  assign: (id: string, owner_id: string) =>
+    api.patch(`/deals/${id}/assign`, { owner_id }).then((r) => r.data),
 };

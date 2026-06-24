@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -22,22 +22,36 @@ import { clsx } from 'clsx';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/contacts', icon: Users, label: 'Contacts' },
-  { to: '/deals', icon: Briefcase, label: 'Pipeline' },
-  { to: '/activities', icon: Activity, label: 'Activities' },
-  { to: '/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/contacts',  icon: Users,           label: 'Contacts' },
+  { to: '/deals',     icon: Briefcase,        label: 'Sales Pipeline' },
+  { to: '/activities',icon: Activity,         label: 'Activities' },
+  { to: '/reports',   icon: BarChart3,        label: 'Reports' },
 ];
 
 const BOTTOM_NAV = [
-  { to: '/team', icon: UserCog, label: 'Team', adminOnly: true },
-  { to: '/billing', icon: CreditCard, label: 'Billing', adminOnly: true },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/team',     icon: UserCog,    label: 'Team',    adminOnly: true },
+  { to: '/billing',  icon: CreditCard, label: 'Billing', adminOnly: true },
+  { to: '/settings', icon: Settings,   label: 'Settings' },
 ];
 
 export const Sidebar: React.FC = () => {
   const { user, org, logout } = useAuthStore();
-  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, setSidebarCollapsed } = useUIStore();
   const navigate = useNavigate();
+
+  // Tracks whether the sidebar is temporarily expanded due to hover
+  const [hoverExpanded, setHoverExpanded] = useState(false);
+
+  // The sidebar is visually open if either permanently open OR hover-expanded
+  const isOpen = !sidebarCollapsed || hoverExpanded;
+
+  const handleMouseEnter = () => {
+    if (sidebarCollapsed) setHoverExpanded(true);
+  };
+
+  const handleMouseLeave = () => {
+    setHoverExpanded(false);
+  };
 
   const handleLogout = async () => {
     try {
@@ -47,20 +61,22 @@ export const Sidebar: React.FC = () => {
     navigate('/login');
   };
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   return (
     <aside
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={clsx(
-        'flex flex-col h-screen bg-bg-card border-r border-surface-border transition-all duration-300 ease-in-out shrink-0',
-        sidebarCollapsed ? 'w-16' : 'w-60'
+        'flex flex-col h-screen bg-bg-card border-r border-surface-border transition-all duration-300 ease-in-out shrink-0 relative z-30',
+        isOpen ? 'w-60' : 'w-16'
       )}
     >
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-5 border-b border-surface-border">
-        {!sidebarCollapsed && (
+        {isOpen && (
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center shadow-glow">
+            <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center shadow-glow shrink-0">
               <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div>
@@ -69,17 +85,29 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
         )}
-        {sidebarCollapsed && (
+        {!isOpen && (
           <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center mx-auto shadow-glow">
             <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         )}
-        {!sidebarCollapsed && (
+        {/* Pin/unpin button — only shows when open and NOT in hover-only state */}
+        {isOpen && !hoverExpanded && (
           <button
             onClick={toggleSidebar}
             className="p-1 rounded-lg hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+            title="Collapse sidebar"
           >
             <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+        {/* Pin button — shows when hover-expanded so user can permanently pin open */}
+        {hoverExpanded && (
+          <button
+            onClick={() => { setSidebarCollapsed(false); setHoverExpanded(false); }}
+            className="p-1 rounded-lg hover:bg-bg-hover text-text-muted hover:text-primary-400 transition-colors"
+            title="Pin sidebar open"
+          >
+            <ChevronRight className="w-4 h-4 rotate-180" />
           </button>
         )}
       </div>
@@ -96,13 +124,13 @@ export const Sidebar: React.FC = () => {
                 isActive
                   ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
                   : 'text-text-muted hover:text-text-primary hover:bg-bg-hover border border-transparent',
-                sidebarCollapsed && 'justify-center px-2'
+                !isOpen && 'justify-center px-2'
               )
             }
-            title={sidebarCollapsed ? label : undefined}
+            title={!isOpen ? label : undefined}
           >
             <Icon className="w-4.5 h-4.5 shrink-0" size={18} />
-            {!sidebarCollapsed && <span>{label}</span>}
+            {isOpen && <span className="truncate">{label}</span>}
           </NavLink>
         ))}
       </nav>
@@ -119,22 +147,22 @@ export const Sidebar: React.FC = () => {
                 isActive
                   ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
                   : 'text-text-muted hover:text-text-primary hover:bg-bg-hover border border-transparent',
-                sidebarCollapsed && 'justify-center px-2'
+                !isOpen && 'justify-center px-2'
               )
             }
-            title={sidebarCollapsed ? label : undefined}
+            title={!isOpen ? label : undefined}
           >
             <Icon size={18} className="shrink-0" />
-            {!sidebarCollapsed && <span>{label}</span>}
+            {isOpen && <span className="truncate">{label}</span>}
           </NavLink>
         ))}
 
-        {/* Collapse toggle (when collapsed) */}
-        {sidebarCollapsed && (
+        {/* Collapse toggle (when permanently collapsed) */}
+        {!isOpen && (
           <button
             onClick={toggleSidebar}
             className="w-full flex items-center justify-center px-2 py-2.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
-            title="Expand sidebar"
+            title="Pin sidebar open"
           >
             <ChevronRight size={18} />
           </button>
@@ -146,13 +174,13 @@ export const Sidebar: React.FC = () => {
         <div
           className={clsx(
             'flex items-center gap-3 p-2 rounded-lg hover:bg-bg-hover transition-colors cursor-pointer group',
-            sidebarCollapsed && 'justify-center'
+            !isOpen && 'justify-center'
           )}
         >
           <div className="w-8 h-8 rounded-full bg-primary-500/20 border border-primary-500/30 flex items-center justify-center text-xs font-bold text-primary-400 shrink-0">
             {getInitials(user?.first_name ?? '', user?.last_name)}
           </div>
-          {!sidebarCollapsed && (
+          {isOpen && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">
                 {user?.first_name} {user?.last_name}
@@ -160,7 +188,7 @@ export const Sidebar: React.FC = () => {
               <p className="text-xs text-text-muted truncate">{user?.role}</p>
             </div>
           )}
-          {!sidebarCollapsed && (
+          {isOpen && (
             <button
               onClick={handleLogout}
               className="opacity-0 group-hover:opacity-100 p-1 rounded text-text-muted hover:text-red-400 transition-all"

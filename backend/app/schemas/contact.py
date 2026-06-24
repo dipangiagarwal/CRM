@@ -45,7 +45,7 @@ class ContactResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class ContactAssign(BaseModel):
-    owner_id: UUID
+    lead_assgned_to: UUID
 
     class Config:
         from_attributes = True

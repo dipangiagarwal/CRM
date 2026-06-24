@@ -257,7 +257,7 @@ async def assign_contact(
     # Verify the new owner belongs to same org
     owner_result = await db.execute(
         select(User).where(
-            User.id == data.owner_id,
+            User.id == data.lead_assgned_to,
             User.org_id == uuid.UUID(user.org_id),
             User.is_active == True
         )
@@ -270,7 +270,7 @@ async def assign_contact(
             detail="Invalid user — must be an active member of your organization"
         )
 
-    contact.owner_id = data.owner_id
+    contact.owner_id = data.lead_assgned_to
     await db.commit()
 
     return {

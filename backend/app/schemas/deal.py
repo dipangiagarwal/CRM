@@ -37,5 +37,8 @@ class DealResponse(BaseModel):
     lost_reason: Optional[str]
     created_at: Optional[str]
 
+class DealAssign(BaseModel):
+    owner_id: UUID
+
     class Config:
         from_attributes = True

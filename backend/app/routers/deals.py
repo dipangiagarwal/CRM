@@ -8,7 +8,7 @@ from app.database import get_db
 from app.middleware.auth import verify_token, CurrentUser, require_write_access
 from app.models.deal import Deal
 from app.models.contact import Contact
-from app.schemas.deal import DealCreate, DealUpdate, DealStageUpdate, DealResponse
+from app.schemas.deal import DealCreate, DealUpdate, DealStageUpdate, DealResponse, DealAssign
 from app.sockets.manager import emit_to_org
 
 router = APIRouter(prefix="/deals", tags=["Deals"])
@@ -237,9 +237,57 @@ async def update_deal_stage(
         "new_stage": data.stage,
         "changed_by": user.first_name
     })
-
     return deal
 
+
+@router.patch("/{deal_id}/assign")
+async def assign_deal(
+    deal_id: str,
+    data: DealAssign,
+    user: CurrentUser = Depends(verify_token),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reassign a deal to a different user. Admin/Manager only."""
+    if user.role not in ["admin", "manager"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin or manager can reassign deals"
+        )
+
+    result = await db.execute(
+        select(Deal).where(
+            Deal.id == uuid.UUID(deal_id),
+            Deal.org_id == uuid.UUID(user.org_id)
+        )
+    )
+    deal = result.scalar_one_or_none()
+
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    owner_result = await db.execute(
+        select(User).where(
+            User.id == data.owner_id,
+            User.org_id == uuid.UUID(user.org_id),
+            User.is_active == True
+        )
+    )
+    new_owner = owner_result.scalar_one_or_none()
+
+    if not new_owner:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user — must be an active member of your organization"
+        )
+
+    deal.owner_id = data.owner_id
+    await db.commit()
+
+    return {
+        "message": "Deal reassigned successfully",
+        "deal_id": str(deal.id),
+        "new_owner": new_owner.first_name + " " + new_owner.last_name
+    }
 
 @router.delete("/delete_deal_by_id/{deal_id}")
 async def delete_deal(

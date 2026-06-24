@@ -1,4 +1,5 @@
 import uuid
+from app.models.user import User
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -7,7 +8,7 @@ from sqlalchemy import select, func, or_
 from app.database import get_db
 from app.middleware.auth import verify_token, CurrentUser, require_write_access
 from app.models.contact import Contact
-from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse
+from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, ContactAssign
 
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
@@ -222,3 +223,58 @@ async def delete_contact(
     await db.commit()
 
     return {"message": "Contact deleted successfully", "id": contact_id}
+
+
+# assign the lead to a user/team member
+@router.patch("/{contact_id}/assign")
+async def assign_contact(
+    contact_id: str,
+    data: ContactAssign,
+    user: CurrentUser = Depends(verify_token),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reassign a contact to a different user.
+    Only admin and manager can reassign.
+    """
+    if user.role not in ["admin", "manager"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin or manager can reassign contacts"
+        )
+
+    result = await db.execute(
+        select(Contact).where(
+            Contact.id == uuid.UUID(contact_id),
+            Contact.org_id == uuid.UUID(user.org_id)
+        )
+    )
+    contact = result.scalar_one_or_none()
+
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Verify the new owner belongs to same org
+    owner_result = await db.execute(
+        select(User).where(
+            User.id == data.owner_id,
+            User.org_id == uuid.UUID(user.org_id),
+            User.is_active == True
+        )
+    )
+    new_owner = owner_result.scalar_one_or_none()
+
+    if not new_owner:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user — must be an active member of your organization"
+        )
+
+    contact.owner_id = data.owner_id
+    await db.commit()
+
+    return {
+        "message": "Contact reassigned successfully",
+        "contact_id": str(contact.id),
+        "new_owner": new_owner.first_name + " " + new_owner.last_name
+    }

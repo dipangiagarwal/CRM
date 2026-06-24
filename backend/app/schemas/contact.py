@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 from uuid import UUID
 
@@ -42,6 +42,10 @@ class ContactResponse(BaseModel):
     custom_fields: dict
     last_activity_at: Optional[str]
     created_at: Optional[str]
+    model_config = ConfigDict(from_attributes=True)
+
+class ContactAssign(BaseModel):
+    owner_id: UUID
 
     class Config:
         from_attributes = True

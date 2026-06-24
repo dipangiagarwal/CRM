@@ -35,8 +35,8 @@ export const AssignLeadPage: React.FC = () => {
     onSuccess: (res: any) => {
       addToast({
         type: 'success',
-        title: `Lead assigned successfully`,
-        description: `Owner set to ${res.new_owner}`
+        title: 'Lead assigned successfully',
+        message: `Owner set to ${res.new_owner}`
       });
       queryClient.invalidateQueries({ queryKey: ['contact', id] });
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
@@ -46,7 +46,7 @@ export const AssignLeadPage: React.FC = () => {
       addToast({
         type: 'error',
         title: 'Assignment failed',
-        description: err?.response?.data?.detail ?? 'Failed to reassign contact'
+        message: err?.response?.data?.detail ?? 'Failed to reassign contact'
       });
     },
   });

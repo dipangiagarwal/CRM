@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Phone, Mail, Building2, Tag, Edit2, Plus, Paperclip,
-  Trash2, Download, Calendar
+  Trash2, Download, Calendar, UserCheck
 } from 'lucide-react';
 import { contactsApi } from '../../api/contacts';
 import { activitiesApi } from '../../api/activities';
@@ -103,6 +103,14 @@ export const ContactDetailPage: React.FC = () => {
             </div>
             {user?.role !== 'viewer' && (
               <div className="flex items-center gap-2">
+                {(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'manager') && (
+                  <button
+                    onClick={() => navigate(`/contacts/${contact.id}/assign`)}
+                    className="btn-secondary btn-sm hover:text-primary-400 hover:border-primary-500/30 transition-colors"
+                  >
+                    <UserCheck size={13} /> Assign Lead
+                  </button>
+                )}
                 <button onClick={() => setActivityOpen(true)} className="btn-secondary btn-sm">
                   <Plus size={13} /> Log Activity
                 </button>

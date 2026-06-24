@@ -19,6 +19,7 @@ import { OnboardingPage } from './pages/onboarding/OnboardingPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { ContactsPage } from './pages/contacts/ContactsPage';
 import { ContactDetailPage } from './pages/contacts/ContactDetailPage';
+import { AssignLeadPage } from './pages/contacts/AssignLeadPage';
 import { DealsKanbanPage } from './pages/deals/DealsKanbanPage';
 import { DealDetailPage } from './pages/deals/DealDetailPage';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -114,6 +115,7 @@ function App() {
               <Route path="contacts" element={<ContactsPage />} />
               <Route path="contacts/new" element={<ContactsPage />} />
               <Route path="contacts/:id" element={<ContactDetailPage />} />
+              <Route path="contacts/:id/assign" element={<AssignLeadPage />} />
 
               {/* Deals */}
               <Route path="deals" element={<DealsKanbanPage />} />

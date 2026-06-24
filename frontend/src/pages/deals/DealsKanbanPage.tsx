@@ -82,7 +82,7 @@ export const DealsKanbanPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Pipeline</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Sales Pipeline</h1>
           <p className="text-text-muted mt-1 text-sm">
             {data?.total ?? 0} deals · Pipeline value: <span className="text-emerald-400 font-semibold">{formatCurrency(totalPipelineValue)}</span>
           </p>

@@ -7,7 +7,7 @@ import { authApi } from '../../api/auth';
 import { Avatar } from '../../components/ui/Avatar';
 import { useUIStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
-import { capitalize } from '../../utils/helpers';
+import { capitalize, ROLE_LABELS } from '../../utils/helpers';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '👤' },
@@ -74,7 +74,7 @@ export const SettingsPage: React.FC = () => {
     changePwMutation.mutate({ old_password: pwForm.old_password, new_password: pwForm.new_password });
   };
 
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
 
   return (
     <div className="space-y-5 animate-fade-in max-w-3xl">
@@ -111,7 +111,7 @@ export const SettingsPage: React.FC = () => {
             <div>
               <p className="font-semibold text-text-primary">{currentUser?.first_name} {currentUser?.last_name}</p>
               <p className="text-sm text-text-muted">{currentUser?.email}</p>
-              <p className="text-xs text-primary-400 mt-1 capitalize">{currentUser?.role}</p>
+              <p className="text-xs text-primary-400 mt-1 font-medium">{ROLE_LABELS[currentUser?.role as string] ?? currentUser?.role}</p>
             </div>
           </div>
 

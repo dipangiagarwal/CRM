@@ -17,7 +17,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { authApi } from '../../api/auth';
-import { getInitials } from '../../utils/helpers';
+import { getInitials, ROLE_LABELS } from '../../utils/helpers';
 import { clsx } from 'clsx';
 
 const NAV_ITEMS = [
@@ -185,7 +185,7 @@ export const Sidebar: React.FC = () => {
               <p className="text-sm font-medium text-text-primary truncate">
                 {user?.first_name} {user?.last_name}
               </p>
-              <p className="text-xs text-text-muted truncate">{user?.role}</p>
+              <p className="text-xs text-text-muted truncate">{ROLE_LABELS[user?.role as string] ?? user?.role}</p>
             </div>
           )}
           {isOpen && (

@@ -1,22 +1,30 @@
-import resend
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from app.tasks.celery_app import celery_app
 from app.config import settings
 
-resend.api_key = settings.RESEND_API_KEY
 
-# only send_email function will be changed if in case any new service platform is used other than resend.com
 def send_email(to_email: str, subject: str, html_content: str):
-    """Send email via Resend API (HTTPS — Render free tier compatible)"""
+    """Send email via Brevo API (HTTPS, port 443 — works on Render free tier)."""
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = settings.BREVO_API_KEY
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": to_email}],
+        sender={"email": settings.FROM_EMAIL, "name": "Pixel CRM"},
+        subject=subject,
+        html_content=html_content
+    )
+
     try:
-        resend.Emails.send({
-            "from": "Pixel CRM <onboarding@resend.dev>",
-            "to": to_email,
-            "subject": subject,
-            "html": html_content,
-        })
+        api_instance.send_transac_email(send_smtp_email)
         print(f"Email sent → {to_email}")
         return True
-    except Exception as e:
+    except ApiException as e:
         print(f"Email failed → {to_email}: {str(e)}")
         return False
 
@@ -30,12 +38,6 @@ def send_welcome_email(email: str, first_name: str, company_name: str):
             <h1>Welcome {first_name}! 🎉</h1>
             <p>Your CRM for <strong>{company_name}</strong> is ready.</p>
             <p>Login and start managing your contacts and deals.</p>
-            <br>
-            <a href="{settings.FRONTEND_URL}/login"
-               style="background:#4F46E5;color:white;padding:12px 24px;
-                      border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:12px;">
-               Access Your Dashboard
-            </a>
             <br>
             <p>Team Pixel CRM</p>
         """
@@ -58,12 +60,6 @@ def send_invite_email(
             <p><strong>Your login details:</strong></p>
             <p>Email: {email}</p>
             <p>Password: {temp_password}</p>
-            <br>
-            <a href="{settings.FRONTEND_URL}/login"
-               style="background:#4F46E5;color:white;padding:12px 24px;
-                      border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:12px;">
-               Login to Pixel CRM
-            </a>
             <p>Please change your password after first login.</p>
             <br>
             <p>Team Pixel CRM</p>
@@ -113,10 +109,8 @@ def send_expiry_reminder(email: str, company_name: str, days_left: int):
     )
 
 
-# send reset email
 @celery_app.task(name="app.tasks.email.send_reset_email")
 def send_reset_email(email: str, first_name: str, reset_link: str):
-    """Send password reset link email."""
     send_email(
         to_email=email,
         subject="Reset your Pixel CRM password",
@@ -137,7 +131,6 @@ def send_reset_email(email: str, first_name: str, reset_link: str):
     )
 
 
-# send grace email
 @celery_app.task(name="app.tasks.email.send_grace_period_email")
 def send_grace_period_email(
     email: str,
@@ -146,7 +139,6 @@ def send_grace_period_email(
     grace_until: str,
     sub_end: str
 ):
-    """Send grace period started notification email."""
     send_email(
         to_email=email,
         subject=f"Action Required — {company_name} subscription has expired",

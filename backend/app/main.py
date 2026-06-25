@@ -49,7 +49,7 @@ fastapi_app.add_middleware(
         "https://crm-olive-seven-28.vercel.app",
         "http://localhost:5173",  # Vite dev server
         "http://localhost:3000",  # Alternative
-        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",  # local dev ke liye
     ],  # baad mein FRONTEND_URL se replace karna
 

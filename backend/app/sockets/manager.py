@@ -5,7 +5,7 @@ from jose import JWTError
 
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins=["https://crm-olive-seven-28.vercel.app"],  # specific URL, "*" nahi
+    cors_allowed_origins=["https://crm-olive-seven-28.vercel.app", "http://127.0.0.1:5173"],  # specific URL, "*" nahi
     logger=False,
     engineio_logger=False
 )

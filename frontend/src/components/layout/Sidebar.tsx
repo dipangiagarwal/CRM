@@ -81,7 +81,7 @@ export const Sidebar: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-bold text-text-primary leading-tight">Pixel CRM</p>
-              <p className="text-xs text-text-muted leading-tight truncate max-w-[100px]">{org?.name || '...'}</p>
+              <p className="text-xs text-text-muted leading-tight truncate max-w-[100px]">{org?.name || 'Org Name'}</p>
             </div>
           </div>
         )}
@@ -107,7 +107,7 @@ export const Sidebar: React.FC = () => {
             className="p-1 rounded-lg hover:bg-bg-hover text-text-muted hover:text-primary-400 transition-colors"
             title="Pin sidebar open"
           >
-            <ChevronRight className="w-4 h-4 rotate-180" />
+            
           </button>
         )}
       </div>

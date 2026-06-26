@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Camera, Save, Loader2, Shield } from 'lucide-react';
+import { Camera, Save, Loader2, Shield, User, Building, Lock } from 'lucide-react';
 import { usersApi } from '../../api/users';
 import { organizationsApi } from '../../api/organizations';
 import { authApi } from '../../api/auth';
 import { Avatar } from '../../components/ui/Avatar';
 import { useUIStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
-import { capitalize, ROLE_LABELS, getFileUrl } from '../../utils/helpers';
+import { ROLE_LABELS, getFileUrl } from '../../utils/helpers';
+import { clsx } from 'clsx';
 
 const TABS = [
-  { id: 'profile', label: 'Profile', icon: '👤' },
-  { id: 'organization', label: 'Organization', icon: '🏢' },
-  { id: 'security', label: 'Security', icon: '🔒' },
+  { id: 'profile', label: 'My Profile', icon: User, description: 'Manage your personal details and job title.' },
+  { id: 'organization', label: 'Workspace Setting', icon: Building, description: 'Customize organization name, logo, and plan.', adminOnly: true },
+  { id: 'security', label: 'Security & Sign In', icon: Lock, description: 'Keep your login credentials secure.' },
 ];
 
 export const SettingsPage: React.FC = () => {
@@ -44,7 +45,7 @@ export const SettingsPage: React.FC = () => {
     mutationFn: usersApi.updateMe,
     onSuccess: (user) => {
       setAuth(user);
-      addToast({ type: 'success', title: 'Profile updated!' });
+      addToast({ type: 'success', title: 'Profile updated' });
       queryClient.invalidateQueries({ queryKey: ['me'] });
     },
     onError: () => addToast({ type: 'error', title: 'Failed to update profile' }),
@@ -54,7 +55,7 @@ export const SettingsPage: React.FC = () => {
     mutationFn: usersApi.uploadAvatar,
     onSuccess: (user) => {
       setAuth(user);
-      addToast({ type: 'success', title: 'Avatar updated!' });
+      addToast({ type: 'success', title: 'Avatar updated' });
       queryClient.invalidateQueries({ queryKey: ['me'] });
     },
     onError: () => addToast({ type: 'error', title: 'Failed to upload avatar' }),
@@ -67,7 +68,7 @@ export const SettingsPage: React.FC = () => {
     },
     onSuccess: (updatedOrg) => {
       setOrg(updatedOrg);
-      addToast({ type: 'success', title: 'Organization updated!' });
+      addToast({ type: 'success', title: 'Workspace settings updated' });
       queryClient.invalidateQueries({ queryKey: ['org'] });
     },
     onError: () => addToast({ type: 'error', title: 'Failed to update organization' }),
@@ -80,7 +81,7 @@ export const SettingsPage: React.FC = () => {
     },
     onSuccess: (updatedOrg) => {
       setOrg(updatedOrg);
-      addToast({ type: 'success', title: 'Logo updated!' });
+      addToast({ type: 'success', title: 'Company logo updated' });
       queryClient.invalidateQueries({ queryKey: ['org'] });
     },
     onError: () => addToast({ type: 'error', title: 'Failed to upload logo' }),
@@ -88,7 +89,10 @@ export const SettingsPage: React.FC = () => {
 
   const changePwMutation = useMutation({
     mutationFn: authApi.changePassword,
-    onSuccess: () => { addToast({ type: 'success', title: 'Password changed!' }); setPwForm({ old_password: '', new_password: '', confirm: '' }); },
+    onSuccess: () => { 
+      addToast({ type: 'success', title: 'Password changed successfully' }); 
+      setPwForm({ old_password: '', new_password: '', confirm: '' }); 
+    },
     onError: (err: any) => setPwError(err?.response?.data?.detail ?? 'Failed to change password'),
   });
 
@@ -103,154 +107,175 @@ export const SettingsPage: React.FC = () => {
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
 
   return (
-    <div className="space-y-5 animate-fade-in max-w-3xl">
+    <div className="space-y-6 animate-fade-in pb-10">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-        <p className="text-text-muted mt-1 text-sm">Manage your profile and workspace settings</p>
+        <h1 className="text-xl font-bold text-text-primary tracking-tight">Settings</h1>
+        <p className="text-text-muted mt-0.5 text-xs font-medium">Manage your personal profiles, preferences, and organization settings.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-bg-elevated border border-surface-border w-fit">
-        {TABS.filter(t => t.id !== 'organization' || isAdmin).map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2
-              ${activeTab === tab.id ? 'bg-bg-card text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'}`}
-          >
-            <span>{tab.icon}</span> {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Profile Tab */}
-      {activeTab === 'profile' && (
-        <div className="card p-6 space-y-6">
-          {/* Avatar */}
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Avatar firstName={currentUser?.first_name ?? ''} lastName={currentUser?.last_name} avatarUrl={currentUser?.avatar_url} size="lg" />
-              <label className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shadow border-2 border-bg-card cursor-pointer hover:bg-primary-600 transition-colors">
-                {uploadAvatarMutation.isPending ? (
-                  <Loader2 size={12} className="text-white animate-spin" />
-                ) : (
-                  <Camera size={12} className="text-white" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Left Side: Category Menu */}
+        <div className="space-y-1.5 md:col-span-1">
+          {TABS.filter(t => !t.adminOnly || isAdmin).map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={clsx(
+                  "w-full flex items-start gap-3 px-3 py-2.5 rounded-xl transition-all border text-left group",
+                  isActive 
+                    ? "bg-primary-500/10 border-primary-500/20 text-primary-400 font-bold" 
+                    : "bg-transparent border-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
                 )}
-                <input type="file" className="hidden" accept="image/*" disabled={uploadAvatarMutation.isPending} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatarMutation.mutate(f); }} />
-              </label>
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary">{currentUser?.first_name} {currentUser?.last_name}</p>
-              <p className="text-sm text-text-muted">{currentUser?.email}</p>
-              <p className="text-xs text-primary-400 mt-1 font-medium">{ROLE_LABELS[currentUser?.role as string] ?? currentUser?.role}</p>
-            </div>
-          </div>
-
-          <form onSubmit={(e) => { e.preventDefault(); updateProfileMutation.mutate(profileForm); }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">First Name</label>
-                <input className="input-field" value={profileForm.first_name} onChange={e => setProfileForm({...profileForm, first_name: e.target.value})} />
-              </div>
-              <div>
-                <label className="label">Last Name</label>
-                <input className="input-field" value={profileForm.last_name} onChange={e => setProfileForm({...profileForm, last_name: e.target.value})} />
-              </div>
-            </div>
-            <div>
-              <label className="label">Job Title</label>
-              <input className="input-field" placeholder="e.g. Sales Manager" value={profileForm.job_title} onChange={e => setProfileForm({...profileForm, job_title: e.target.value})} />
-            </div>
-            <div>
-              <label className="label">Email</label>
-              <input className="input-field opacity-50 cursor-not-allowed" value={currentUser?.email} disabled />
-              <p className="text-xs text-text-muted mt-1">Email cannot be changed. Contact support.</p>
-            </div>
-            <div className="flex justify-end">
-              <button type="submit" disabled={updateProfileMutation.isPending} className="btn-primary btn-md">
-                {updateProfileMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                Save Changes
+              >
+                <Icon size={16} className={clsx("shrink-0 mt-0.5", isActive ? "text-primary-400" : "text-text-muted group-hover:text-text-primary")} />
+                <div>
+                  <p className="text-xs font-semibold leading-tight">{tab.label}</p>
+                  <p className="text-[10px] text-text-muted mt-0.5 leading-normal hidden md:block">{tab.description}</p>
+                </div>
               </button>
-            </div>
-          </form>
+            );
+          })}
         </div>
-      )}
 
-      {/* Organization Tab */}
-      {activeTab === 'organization' && isAdmin && (
-        <div className="card p-6 space-y-6">
-          <div>
-            <h3 className="font-semibold text-text-primary mb-4">Company Settings</h3>
-
-            {/* Logo */}
-            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-surface-border">
-              <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-surface-border flex items-center justify-center text-2xl font-bold text-primary-400">
-                {org?.logo_url ? <img src={getFileUrl(org.logo_url)} className="w-full h-full object-cover rounded-xl" alt="logo" /> : org?.name?.[0]?.toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-primary">Company Logo</p>
-                <p className="text-xs text-text-muted mb-2">PNG, JPG, WebP. Max 2MB.</p>
-                <label className="btn-secondary btn-sm cursor-pointer">
-                  {uploadLogoMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : "Upload Logo"}
-                  <input type="file" className="hidden" accept="image/*" disabled={uploadLogoMutation.isPending} onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogoMutation.mutate(f); }} />
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="label">Company Name</label>
-                <input className="input-field" value={orgName} onChange={e => setOrgName(e.target.value)} />
-              </div>
-              <div>
-                <label className="label">Plan</label>
-                <div className="flex items-center gap-2">
-                  <span className="badge text-primary-400 bg-primary-500/10 border border-primary-500/30">{capitalize(org?.plan ?? '')}</span>
-                  <span className={`badge ${org?.status === 'active' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 border' : 'text-red-400 bg-red-500/10 border-red-500/30 border'}`}>
-                    {capitalize(org?.status ?? '')}
+        {/* Right Side: Tab View */}
+        <div className="md:col-span-3">
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="card p-6 space-y-6">
+              {/* Profile Details Header */}
+              <div className="flex items-center gap-4 pb-6 border-b border-surface-border">
+                <div className="relative group">
+                  <Avatar firstName={currentUser?.first_name ?? ''} lastName={currentUser?.last_name} avatarUrl={currentUser?.avatar_url} size="lg" className="shadow border border-surface-border/50" />
+                  <label className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl bg-primary-500 hover:bg-primary-600 flex items-center justify-center border-2 border-bg-card cursor-pointer transition-colors shadow">
+                    {uploadAvatarMutation.isPending ? (
+                      <Loader2 size={12} className="text-white animate-spin" />
+                    ) : (
+                      <Camera size={12} className="text-white" />
+                    )}
+                    <input type="file" className="hidden" accept="image/*" disabled={uploadAvatarMutation.isPending} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatarMutation.mutate(f); }} />
+                  </label>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-text-primary">{currentUser?.first_name} {currentUser?.last_name}</p>
+                  <p className="text-xs text-text-muted mt-0.5 font-medium">{currentUser?.email}</p>
+                  <span className="inline-block mt-2 px-2 py-0.5 text-[9px] font-extrabold text-primary-400 bg-primary-500/10 rounded border border-primary-500/10 uppercase tracking-wider">
+                    {ROLE_LABELS[currentUser?.role as string] ?? currentUser?.role}
                   </span>
                 </div>
               </div>
-              <div className="flex justify-end">
-                <button onClick={() => updateOrgMutation.mutate()} disabled={updateOrgMutation.isPending} className="btn-primary btn-md">
-                  {updateOrgMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  Save
-                </button>
+
+              {/* Form details */}
+              <form onSubmit={(e) => { e.preventDefault(); updateProfileMutation.mutate(profileForm); }} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">First Name *</label>
+                    <input className="input-field" value={profileForm.first_name} onChange={e => setProfileForm({...profileForm, first_name: e.target.value})} required />
+                  </div>
+                  <div>
+                    <label className="label">Last Name</label>
+                    <input className="input-field" value={profileForm.last_name} onChange={e => setProfileForm({...profileForm, last_name: e.target.value})} />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Job Title</label>
+                  <input className="input-field" placeholder="e.g. Senior Account Executive" value={profileForm.job_title} onChange={e => setProfileForm({...profileForm, job_title: e.target.value})} />
+                </div>
+                <div>
+                  <label className="label">Email Address (Read-only)</label>
+                  <input className="input-field opacity-60 cursor-not-allowed bg-bg bg-opacity-70" value={currentUser?.email} disabled />
+                  <p className="text-[10px] text-text-muted mt-1.5 font-medium">To modify account emails, please contact workspace administrators.</p>
+                </div>
+                <div className="flex justify-end pt-3">
+                  <button type="submit" disabled={updateProfileMutation.isPending} className="btn-primary btn-sm flex items-center gap-1.5">
+                    {updateProfileMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Organization Tab */}
+          {activeTab === 'organization' && isAdmin && (
+            <div className="card p-6 space-y-6">
+              {/* Logo Manager */}
+              <div className="flex items-center gap-4 pb-6 border-b border-surface-border">
+                <div className="w-16 h-16 rounded-2xl bg-bg border border-surface-border flex items-center justify-center text-xl font-bold text-primary-400 overflow-hidden shrink-0">
+                  {org?.logo_url ? <img src={getFileUrl(org.logo_url)} className="w-full h-full object-cover" alt="logo" /> : org?.name?.[0]?.toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text-primary">Workspace Logo</p>
+                  <p className="text-[10px] text-text-muted font-medium mb-2.5">Upload a clean PNG, JPG, or WebP logo file (Max 2MB).</p>
+                  <label className="btn-secondary btn-sm cursor-pointer select-none">
+                    {uploadLogoMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : "Upload Logo"}
+                    <input type="file" className="hidden" accept="image/*" disabled={uploadLogoMutation.isPending} onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogoMutation.mutate(f); }} />
+                  </label>
+                </div>
+              </div>
+
+              {/* Company Info Form */}
+              <div className="space-y-4">
+                <div>
+                  <label className="label">Organization Name *</label>
+                  <input className="input-field" value={orgName} onChange={e => setOrgName(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="label">Current Subscription Plan</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="badge text-[10px] py-0 px-2.5 text-primary-400 bg-primary-500/10 border border-primary-500/20 uppercase font-bold tracking-wider">{org?.plan ?? 'Starter'}</span>
+                    <span className={clsx(
+                      'badge text-[10px] py-0 px-2.5 border uppercase font-bold tracking-wider', 
+                      org?.status === 'active' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'
+                    )}>
+                      {org?.status ?? 'Active'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-3">
+                  <button onClick={() => updateOrgMutation.mutate()} disabled={updateOrgMutation.isPending} className="btn-primary btn-sm flex items-center gap-1.5">
+                    {updateOrgMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                    Save Settings
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Security Tab */}
-      {activeTab === 'security' && (
-        <div className="card p-6">
-          <h3 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
-            <Shield size={16} className="text-primary-400" /> Change Password
-          </h3>
-          <form onSubmit={handleChangePw} className="space-y-4">
-            <div>
-              <label className="label">Current Password</label>
-              <input type="password" className="input-field" value={pwForm.old_password} onChange={e => { setPwForm({...pwForm, old_password: e.target.value}); setPwError(''); }} />
+          {/* Security Tab */}
+          {activeTab === 'security' && (
+            <div className="card p-6 space-y-4">
+              <div className="pb-4 border-b border-surface-border flex items-center gap-2">
+                <Shield size={16} className="text-primary-400" />
+                <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider">Change Password</h3>
+              </div>
+              <form onSubmit={handleChangePw} className="space-y-4">
+                <div>
+                  <label className="label">Current Password *</label>
+                  <input type="password" className="input-field" value={pwForm.old_password} onChange={e => { setPwForm({...pwForm, old_password: e.target.value}); setPwError(''); }} required />
+                </div>
+                <div>
+                  <label className="label">New Password *</label>
+                  <input type="password" className="input-field" value={pwForm.new_password} onChange={e => { setPwForm({...pwForm, new_password: e.target.value}); setPwError(''); }} required />
+                </div>
+                <div>
+                  <label className="label">Confirm New Password *</label>
+                  <input type="password" className="input-field" value={pwForm.confirm} onChange={e => { setPwForm({...pwForm, confirm: e.target.value}); setPwError(''); }} required />
+                  {pwError && <p className="text-xs text-red-400 mt-2 font-medium">{pwError}</p>}
+                </div>
+                <div className="flex justify-end pt-3">
+                  <button type="submit" disabled={changePwMutation.isPending} className="btn-primary btn-sm flex items-center gap-1.5">
+                    {changePwMutation.isPending && <Loader2 size={13} className="animate-spin" />}
+                    Update Password
+                  </button>
+                </div>
+              </form>
             </div>
-            <div>
-              <label className="label">New Password</label>
-              <input type="password" className="input-field" value={pwForm.new_password} onChange={e => { setPwForm({...pwForm, new_password: e.target.value}); setPwError(''); }} />
-            </div>
-            <div>
-              <label className="label">Confirm New Password</label>
-              <input type="password" className="input-field" value={pwForm.confirm} onChange={e => { setPwForm({...pwForm, confirm: e.target.value}); setPwError(''); }} />
-              {pwError && <p className="text-xs text-red-400 mt-1">{pwError}</p>}
-            </div>
-            <div className="flex justify-end">
-              <button type="submit" disabled={changePwMutation.isPending} className="btn-primary btn-md">
-                {changePwMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
-                Change Password
-              </button>
-            </div>
-          </form>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

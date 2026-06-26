@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL + '/api/v1',
@@ -56,6 +57,14 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError);
         isRefreshing = false;
+        
+        // Clear Zustand auth state to prevent infinite redirect loops
+        try {
+          useAuthStore.getState().logout();
+        } catch {
+          localStorage.removeItem('pixel-crm-auth');
+        }
+
         // Redirect to login
         window.location.href = '/login';
         return Promise.reject(refreshError);

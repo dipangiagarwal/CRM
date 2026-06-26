@@ -65,37 +65,37 @@ export const ContactDetailPage: React.FC = () => {
   });
 
   if (isLoading) return <PageLoader />;
-  if (!contact) return <div className="text-text-muted p-8">Contact not found</div>;
+  if (!contact) return <div className="text-text-muted p-8 text-center text-sm font-semibold">Contact profile not found</div>;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Back + Header */}
+    <div className="space-y-6 animate-fade-in pb-10">
+      {/* Back Link */}
       <div>
         <button
           onClick={() => navigate('/contacts')}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-4"
+          className="flex items-center gap-2 text-xs font-bold text-text-muted hover:text-text-primary uppercase tracking-wider transition-colors mb-4"
         >
-          <ArrowLeft size={14} /> Back to Contacts
+          <ArrowLeft size={13} /> Back to Contacts
         </button>
 
         <div className="card p-6">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <Avatar firstName={contact.first_name} lastName={contact.last_name} size="lg" />
+              <Avatar firstName={contact.first_name} lastName={contact.last_name} size="lg" className="shadow-sm border border-surface-border/50" />
               <div>
-                <h1 className="text-xl font-bold text-text-primary">
+                <h1 className="text-lg font-bold text-text-primary tracking-tight">
                   {contact.first_name} {contact.last_name}
                 </h1>
                 {contact.company_name && (
-                  <p className="text-text-muted text-sm flex items-center gap-1.5 mt-1">
-                    <Building2 size={13} /> {contact.company_name}
+                  <p className="text-text-muted text-xs flex items-center gap-1.5 mt-1 font-medium">
+                    <Building2 size={12} /> {contact.company_name}
                   </p>
                 )}
-                <div className="flex items-center gap-2 mt-2">
-                  <span className={clsx('badge', LIFECYCLE_COLORS[contact.lifecycle_stage])}>
+                <div className="flex items-center gap-2 mt-2.5">
+                  <span className={clsx('badge text-[10px] py-0.5 px-2 font-bold', LIFECYCLE_COLORS[contact.lifecycle_stage])}>
                     {capitalize(contact.lifecycle_stage)}
                   </span>
-                  <span className={clsx('text-sm font-bold', getLeadScoreColor(contact.lead_score))}>
+                  <span className={clsx('text-xs font-bold', getLeadScoreColor(contact.lead_score))}>
                     Score: {contact.lead_score}
                   </span>
                 </div>
@@ -105,7 +105,7 @@ export const ContactDetailPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate(`/contacts/${contact.id}/assign`)}
-                  className="btn-secondary btn-sm hover:text-primary-400 hover:border-primary-500/30 transition-colors"
+                  className="btn-secondary btn-sm"
                 >
                   <UserCheck size={13} /> Assign Lead
                 </button>
@@ -113,47 +113,47 @@ export const ContactDetailPage: React.FC = () => {
                   <Plus size={13} /> Log Activity
                 </button>
                 <button onClick={() => setEditOpen(true)} className="btn-primary btn-sm">
-                  <Edit2 size={13} /> Edit
+                  <Edit2 size={13} /> Edit Profile
                 </button>
               </div>
             )}
           </div>
 
           {/* Info grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-surface-border">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-surface-border/55">
             <div>
-              <p className="text-xs text-text-muted mb-1">Email</p>
-              <p className="text-sm text-text-primary flex items-center gap-1.5">
-                <Mail size={12} className="text-text-muted" />
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Email</p>
+              <p className="text-xs text-text-primary flex items-center gap-1.5 font-medium truncate">
+                <Mail size={12} className="text-text-muted shrink-0" />
                 {contact.email || '—'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-text-muted mb-1">Phone</p>
-              <p className="text-sm text-text-primary flex items-center gap-1.5">
-                <Phone size={12} className="text-text-muted" />
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Phone</p>
+              <p className="text-xs text-text-primary flex items-center gap-1.5 font-medium">
+                <Phone size={12} className="text-text-muted shrink-0" />
                 {contact.phone || '—'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-text-muted mb-1">Source</p>
-              <p className="text-sm text-text-primary">{contact.source || '—'}</p>
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Lead Source</p>
+              <p className="text-xs text-text-primary font-medium">{contact.source || '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-text-muted mb-1">Created</p>
-              <p className="text-sm text-text-primary flex items-center gap-1.5">
+              <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Created Date</p>
+              <p className="text-xs text-text-primary flex items-center gap-1.5 font-medium">
                 <Calendar size={12} className="text-text-muted" />
                 {formatDate(contact.created_at ?? undefined)}
               </p>
             </div>
           </div>
 
-          {/* Tags */}
+          {/* Tags list */}
           {contact.tags?.length > 0 && (
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <Tag size={13} className="text-text-muted" />
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-surface-border/30 flex-wrap">
+              <Tag size={12} className="text-text-muted" />
               {contact.tags.map((tag) => (
-                <span key={tag} className="badge text-text-muted bg-bg-hover border border-surface-border">{tag}</span>
+                <span key={tag} className="badge text-[9px] py-0 px-2.5 text-text-secondary bg-bg bg-opacity-40 border-surface-border">{tag}</span>
               ))}
             </div>
           )}
@@ -164,44 +164,44 @@ export const ContactDetailPage: React.FC = () => {
         {/* Activity Timeline */}
         <div className="xl:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-text-primary">Activity Timeline</h2>
+            <h2 className="text-xs font-bold text-text-primary uppercase tracking-wider">Activity History</h2>
             {user?.role !== 'viewer' && (
               <button onClick={() => setActivityOpen(true)} className="btn-secondary btn-sm">
-                <Plus size={13} /> Add
+                <Plus size={12} /> Log Activity
               </button>
             )}
           </div>
 
           <div className="space-y-3">
             {activities?.activities.length === 0 && (
-              <div className="card p-8 text-center">
-                <p className="text-text-muted text-sm">No activities yet. Log the first one!</p>
+              <div className="card p-8 text-center text-xs font-medium text-text-muted">
+                No activity history found. Add the first log above!
               </div>
             )}
             {activities?.activities.map((act) => (
               <div key={act.id} className="card p-4 flex items-start gap-3">
-                <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0', ACTIVITY_COLORS[act.type])}>
+                <div className={clsx('w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0', ACTIVITY_COLORS[act.type])}>
                   {ACTIVITY_ICONS[act.type]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-text-primary">{act.title}</p>
-                    <span className="text-xs text-text-muted">{timeAgo(act.created_at ?? undefined)}</span>
+                    <p className="text-xs font-bold text-text-primary leading-tight">{act.title}</p>
+                    <span className="text-[10px] text-text-muted font-medium">{timeAgo(act.created_at ?? undefined)}</span>
                   </div>
-                  {act.body && <p className="text-sm text-text-muted mt-1">{act.body}</p>}
+                  {act.body && <p className="text-xs text-text-secondary mt-1.5 leading-snug">{act.body}</p>}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Files */}
+        {/* Files section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-text-primary">Files</h2>
+            <h2 className="text-xs font-bold text-text-primary uppercase tracking-wider">Attached Files</h2>
             {user?.role !== 'viewer' && (
-              <label className="btn-secondary btn-sm cursor-pointer">
-                <Paperclip size={13} /> Upload
+              <label className="btn-secondary btn-sm cursor-pointer select-none">
+                <Paperclip size={12} /> Upload
                 <input
                   type="file"
                   className="hidden"
@@ -216,33 +216,33 @@ export const ContactDetailPage: React.FC = () => {
 
           <div className="space-y-2">
             {files?.length === 0 && (
-              <div className="card p-6 text-center">
-                <p className="text-text-muted text-xs">No files attached</p>
+              <div className="card p-6 text-center text-xs font-medium text-text-muted">
+                No files uploaded to this profile.
               </div>
             )}
             {files?.map((file) => (
-              <div key={file.id} className="card p-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Paperclip size={14} className="text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">{file.filename}</p>
-                  <p className="text-xs text-text-muted">{formatFileSize(file.size_bytes)}</p>
+              <div key={file.id} className="card p-3 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Paperclip size={13} className="text-blue-400 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-text-primary truncate max-w-[150px]">{file.filename}</p>
+                    <p className="text-[10px] text-text-muted mt-0.5 font-medium">{formatFileSize(file.size_bytes)}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <a
                     href={filesApi.downloadUrl(file.id)}
                     target="_blank"
-                    className="p-1.5 rounded hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+                    className="p-1 rounded hover:bg-bg-hover text-text-muted hover:text-text-primary"
                   >
-                    <Download size={13} />
+                    <Download size={12} />
                   </a>
                   {user?.role !== 'viewer' && (
                     <button
                       onClick={() => deleteFileMutation.mutate(file.id)}
-                      className="p-1.5 rounded hover:bg-red-500/10 text-text-muted hover:text-red-400 transition-colors"
+                      className="p-1 rounded hover:bg-red-500/10 text-text-muted hover:text-red-400"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={12} />
                     </button>
                   )}
                 </div>
@@ -253,7 +253,7 @@ export const ContactDetailPage: React.FC = () => {
       </div>
 
       {/* Edit Modal */}
-      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Contact" size="lg">
+      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Contact Info" size="lg">
         <ContactForm
           contact={contact}
           onSuccess={() => {
@@ -265,7 +265,7 @@ export const ContactDetailPage: React.FC = () => {
       </Modal>
 
       {/* Activity Modal */}
-      <Modal isOpen={activityOpen} onClose={() => setActivityOpen(false)} title="Log Activity" size="md">
+      <Modal isOpen={activityOpen} onClose={() => setActivityOpen(false)} title="Log New Activity" size="md">
         <ActivityForm
           contactId={contact.id}
           onSuccess={() => {

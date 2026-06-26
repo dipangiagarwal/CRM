@@ -50,8 +50,8 @@ async def _check_expiring_subscriptions():
             for org in orgs:
                 print(f"Reminder: {org.name} expires in {days_left} days")
                 # TODO: Send expiry reminder email
-                # from app.tasks.email import send_expiry_reminder
-                # send_expiry_reminder.delay(...)
+                from app.tasks.email import send_expiry_reminder
+                send_expiry_reminder.delay(...)
 
 
 @celery_app.task(name="app.tasks.subscription.update_grace_period")

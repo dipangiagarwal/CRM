@@ -9,6 +9,7 @@ from app.database import get_db
 from app.middleware.auth import verify_token, CurrentUser, require_write_access, can_assign
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, ContactAssign
+from app.sockets.manager import emit_to_user
 
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
@@ -272,6 +273,20 @@ async def assign_contact(
 
     contact.owner_id = data.lead_assgned_to
     await db.commit()
+
+    # Notify the new owner via real-time socket
+    contact_name = f"{contact.first_name} {contact.last_name or ''}".strip()
+    assigner_result = await db.execute(
+        select(User).where(User.id == uuid.UUID(user.user_id))
+    )
+    assigner = assigner_result.scalar_one_or_none()
+    assigned_by_name = f"{assigner.first_name} {assigner.last_name}" if assigner else "Someone"
+
+    await emit_to_user(str(data.lead_assgned_to), "lead_assigned", {
+        "contact_id": str(contact.id),
+        "contact_name": contact_name,
+        "assigned_by": assigned_by_name
+    })
 
     return {
         "message": "Contact reassigned successfully",

@@ -13,16 +13,19 @@ import {
   ChevronRight,
   Zap,
   LogOut,
+  UserCheck,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { authApi } from '../../api/auth';
 import { getInitials, ROLE_LABELS } from '../../utils/helpers';
+import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/contacts',  icon: Users,           label: 'Leads' },
+  { to: '/tasks', icon: UserCheck, label: 'Tasks' },
   { to: '/deals',     icon: Briefcase,        label: 'Sales Pipeline' },
   { to: '/activities',icon: Activity,         label: 'Activities' },
   { to: '/reports',   icon: BarChart3,        label: 'Reports' },
@@ -75,13 +78,13 @@ export const Sidebar: React.FC = () => {
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-5 border-b border-surface-border">
         {isOpen && (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center shadow-glow shrink-0">
               <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-text-primary leading-tight">Pixel CRM</p>
-              <p className="text-xs text-text-muted leading-tight truncate max-w-[100px]">{org?.name || 'Org Name'}</p>
+              <p className="text-xs text-text-muted leading-tight truncate">{org?.name || 'Org Name'}</p>
             </div>
           </div>
         )}
@@ -120,10 +123,10 @@ export const Sidebar: React.FC = () => {
             to={to}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150',
                 isActive
                   ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-hover border border-transparent',
+                  : 'text-text-primary hover:text-primary-400 hover:bg-bg-hover border border-transparent',
                 !isOpen && 'justify-center px-2'
               )
             }
@@ -143,10 +146,10 @@ export const Sidebar: React.FC = () => {
             to={to}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150',
                 isActive
                   ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-hover border border-transparent',
+                  : 'text-text-primary hover:text-primary-400 hover:bg-bg-hover border border-transparent',
                 !isOpen && 'justify-center px-2'
               )
             }
@@ -177,9 +180,7 @@ export const Sidebar: React.FC = () => {
             !isOpen && 'justify-center'
           )}
         >
-          <div className="w-8 h-8 rounded-full bg-primary-500/20 border border-primary-500/30 flex items-center justify-center text-xs font-bold text-primary-400 shrink-0">
-            {getInitials(user?.first_name ?? '', user?.last_name)}
-          </div>
+          <Avatar firstName={user?.first_name ?? ''} lastName={user?.last_name} avatarUrl={user?.avatar_url} size="sm" className="w-8 h-8" />
           {isOpen && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">

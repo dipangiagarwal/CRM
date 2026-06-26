@@ -11,6 +11,14 @@ export const usersApi = {
   updateMe: (data: UserUpdate) =>
     api.patch<User>('/users/update_me', data).then((r) => r.data),
 
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<User>('/users/me/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data);
+  },
+
   invite: (data: UserInvite) =>
     api.post<User>('/users/invite_user', data).then((r) => r.data),
 

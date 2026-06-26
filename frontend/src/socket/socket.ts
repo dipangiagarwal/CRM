@@ -46,6 +46,14 @@ export const connectSocket = () => {
     }, 2000);
   });
 
+  socket.on('lead_assigned', (data: { contact_id: string; contact_name: string; assigned_by: string }) => {
+    useUIStore.getState().addToast({
+      type: 'info',
+      title: 'New Lead Assigned',
+      message: `You've been assigned "${data.contact_name}" by ${data.assigned_by}`,
+    });
+  });
+
   return socket;
 };
 

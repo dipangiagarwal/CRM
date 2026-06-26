@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
@@ -11,6 +11,7 @@ from app.models.deal import Deal
 from app.schemas.user import UserInvite, UserUpdate, RoleUpdate, TransferData, UserResponse
 from app.utils.security import hash_password
 from app.sockets.manager import emit_to_user
+from app.services.storage import upload_file
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -150,6 +151,54 @@ async def update_me(
     for field, value in update_data.items():
         setattr(db_user, field, value)
 
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    user: CurrentUser = Depends(verify_token),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Upload user profile avatar.
+    Stores in R2 and saves URL in users table.
+    """
+    # Validate image type
+    allowed = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"]
+    if file.content_type not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail="Only images allowed (JPEG, PNG, WebP, SVG)"
+        )
+
+    # Max 2MB for avatar
+    file_bytes = await file.read()
+    if len(file_bytes) > 2 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="Avatar must be under 2MB"
+        )
+
+    # Upload to R2
+    result = await upload_file(
+        file_bytes=file_bytes,
+        filename=f"avatar_{user.user_id}.{file.filename.split('.')[-1]}",
+        org_id=user.org_id,
+        mime_type=file.content_type
+    )
+
+    # Update user avatar_url
+    user_result = await db.execute(
+        select(User).where(
+            User.id == uuid.UUID(user.user_id)
+        )
+    )
+    db_user = user_result.scalar_one_or_none()
+    db_user.avatar_url = result["storage_path"]
+    
     await db.commit()
     await db.refresh(db_user)
     return db_user

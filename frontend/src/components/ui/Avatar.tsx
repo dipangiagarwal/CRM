@@ -1,5 +1,4 @@
-import React from 'react';
-import { getInitials } from '../../utils/helpers';
+import { getInitials, getFileUrl } from '../../utils/helpers';
 import { clsx } from 'clsx';
 
 interface AvatarProps {
@@ -27,7 +26,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   if (avatarUrl) {
     return (
       <img
-        src={avatarUrl}
+        src={getFileUrl(avatarUrl)}
         alt={`${firstName} ${lastName}`}
         className={clsx('rounded-full object-cover', SIZE_CLASSES[size], className)}
       />

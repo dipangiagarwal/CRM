@@ -89,6 +89,38 @@ async def upload(
     return file_record
 
 
+@router.get("/serve")
+async def serve_file(path: str):
+    """
+    Serve raw file from R2.
+    Used for displaying logos, avatars, etc.
+    """
+    try:
+        # Prevent traversal attacks (must be under orgs/)
+        if not path.startswith("orgs/"):
+            raise HTTPException(status_code=400, detail="Invalid path")
+            
+        file_bytes = await get_file(path)
+        
+        ext = path.split(".")[-1].lower() if "." in path else ""
+        mime_type = "application/octet-stream"
+        if ext in ["png"]:
+            mime_type = "image/png"
+        elif ext in ["jpg", "jpeg"]:
+            mime_type = "image/jpeg"
+        elif ext in ["webp"]:
+            mime_type = "image/webp"
+        elif ext in ["svg"]:
+            mime_type = "image/svg+xml"
+            
+        return StreamingResponse(
+            io.BytesIO(file_bytes),
+            media_type=mime_type
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="File not found")
+
+
 @router.get("/get_files", response_model=list[FileResponse])
 async def list_files(
     contact_id: Optional[str] = Query(None),

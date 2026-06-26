@@ -180,3 +180,11 @@ export const getLeadScoreColor = (score: number): string => {
   if (score >= 25) return 'text-orange-400';
   return 'text-red-400';
 };
+
+export const getFileUrl = (path: string | null | undefined): string => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+  return `${apiUrl}/api/v1/files/serve?path=${encodeURIComponent(path)}`;
+};

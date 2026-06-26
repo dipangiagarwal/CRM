@@ -7,7 +7,7 @@ import { authApi } from '../../api/auth';
 import { Avatar } from '../../components/ui/Avatar';
 import { useUIStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
-import { capitalize, ROLE_LABELS } from '../../utils/helpers';
+import { capitalize, ROLE_LABELS, getFileUrl } from '../../utils/helpers';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '👤' },
@@ -18,7 +18,7 @@ const TABS = [
 export const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addToast } = useUIStore();
-  const { user: currentUser, setAuth } = useAuthStore();
+  const { user: currentUser, setAuth, setOrg } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
 
   // Profile form
@@ -50,14 +50,40 @@ export const SettingsPage: React.FC = () => {
     onError: () => addToast({ type: 'error', title: 'Failed to update profile' }),
   });
 
+  const uploadAvatarMutation = useMutation({
+    mutationFn: usersApi.uploadAvatar,
+    onSuccess: (user) => {
+      setAuth(user);
+      addToast({ type: 'success', title: 'Avatar updated!' });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+    onError: () => addToast({ type: 'error', title: 'Failed to upload avatar' }),
+  });
+
   const updateOrgMutation = useMutation({
-    mutationFn: () => organizationsApi.update(orgName),
-    onSuccess: () => { addToast({ type: 'success', title: 'Organization updated!' }); queryClient.invalidateQueries({ queryKey: ['org'] }); },
+    mutationFn: async () => {
+      await organizationsApi.update(orgName);
+      return organizationsApi.me();
+    },
+    onSuccess: (updatedOrg) => {
+      setOrg(updatedOrg);
+      addToast({ type: 'success', title: 'Organization updated!' });
+      queryClient.invalidateQueries({ queryKey: ['org'] });
+    },
+    onError: () => addToast({ type: 'error', title: 'Failed to update organization' }),
   });
 
   const uploadLogoMutation = useMutation({
-    mutationFn: organizationsApi.uploadLogo,
-    onSuccess: () => { addToast({ type: 'success', title: 'Logo updated!' }); queryClient.invalidateQueries({ queryKey: ['org'] }); },
+    mutationFn: async (file: File) => {
+      await organizationsApi.uploadLogo(file);
+      return organizationsApi.me();
+    },
+    onSuccess: (updatedOrg) => {
+      setOrg(updatedOrg);
+      addToast({ type: 'success', title: 'Logo updated!' });
+      queryClient.invalidateQueries({ queryKey: ['org'] });
+    },
+    onError: () => addToast({ type: 'error', title: 'Failed to upload logo' }),
   });
 
   const changePwMutation = useMutation({
@@ -103,10 +129,15 @@ export const SettingsPage: React.FC = () => {
           {/* Avatar */}
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Avatar firstName={currentUser?.first_name ?? ''} lastName={currentUser?.last_name} size="lg" />
-              <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shadow border-2 border-bg-card">
-                <Camera size={12} className="text-white" />
-              </button>
+              <Avatar firstName={currentUser?.first_name ?? ''} lastName={currentUser?.last_name} avatarUrl={currentUser?.avatar_url} size="lg" />
+              <label className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shadow border-2 border-bg-card cursor-pointer hover:bg-primary-600 transition-colors">
+                {uploadAvatarMutation.isPending ? (
+                  <Loader2 size={12} className="text-white animate-spin" />
+                ) : (
+                  <Camera size={12} className="text-white" />
+                )}
+                <input type="file" className="hidden" accept="image/*" disabled={uploadAvatarMutation.isPending} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatarMutation.mutate(f); }} />
+              </label>
             </div>
             <div>
               <p className="font-semibold text-text-primary">{currentUser?.first_name} {currentUser?.last_name}</p>
@@ -154,14 +185,14 @@ export const SettingsPage: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-surface-border">
               <div className="w-16 h-16 rounded-xl bg-bg-elevated border border-surface-border flex items-center justify-center text-2xl font-bold text-primary-400">
-                {org?.logo_url ? <img src={org.logo_url} className="w-full h-full object-cover rounded-xl" alt="logo" /> : org?.name?.[0]?.toUpperCase()}
+                {org?.logo_url ? <img src={getFileUrl(org.logo_url)} className="w-full h-full object-cover rounded-xl" alt="logo" /> : org?.name?.[0]?.toUpperCase()}
               </div>
               <div>
                 <p className="text-sm font-medium text-text-primary">Company Logo</p>
                 <p className="text-xs text-text-muted mb-2">PNG, JPG, WebP. Max 2MB.</p>
                 <label className="btn-secondary btn-sm cursor-pointer">
-                  Upload Logo
-                  <input type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogoMutation.mutate(f); }} />
+                  {uploadLogoMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : "Upload Logo"}
+                  <input type="file" className="hidden" accept="image/*" disabled={uploadLogoMutation.isPending} onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogoMutation.mutate(f); }} />
                 </label>
               </div>
             </div>

@@ -53,7 +53,18 @@ export const ContactForm: React.FC<ContactFormProps> = ({ contact, onSuccess, on
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
-    const data = { ...form, tags };
+    // Strip empty strings to undefined — Pydantic's EmailStr rejects "" as invalid
+    const data: ContactCreate = {
+      first_name: form.first_name,
+      last_name: form.last_name || undefined,
+      email: form.email || undefined,
+      phone: form.phone || undefined,
+      company_name: form.company_name || undefined,
+      lifecycle_stage: form.lifecycle_stage || undefined,
+      lead_score: form.lead_score,
+      source: form.source || undefined,
+      tags,
+    };
     if (contact) {
       updateMutation.mutate(data);
     } else {

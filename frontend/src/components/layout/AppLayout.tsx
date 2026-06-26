@@ -5,18 +5,21 @@ import { TopBar } from './TopBar';
 import { ToastContainer } from '../ui/Toast';
 import { connectSocket, disconnectSocket } from '../../socket/socket';
 import { useAuthStore } from '../../store/authStore';
+import { organizationsApi } from '../../api/organizations';
 
 export const AppLayout: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, setOrg } = useAuthStore();
 
   useEffect(() => {
     if (isAuthenticated) {
       connectSocket();
+      // Fetch latest organization info to ensure store is updated
+      organizationsApi.me().then(setOrg).catch(() => {});
     }
     return () => {
       disconnectSocket();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setOrg]);
 
   return (
     <div className="flex h-screen bg-bg overflow-hidden">

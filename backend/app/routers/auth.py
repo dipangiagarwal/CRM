@@ -377,7 +377,7 @@ async def forgot_password(
         str(user.id)
     )
 
-    reset_link = f"http://localhost:5173/reset-password?token={token}"
+    reset_link = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={token}"
 
     send_reset_email.delay(
         email=user.email,

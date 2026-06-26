@@ -8,6 +8,7 @@ import { activitiesApi } from '../../api/activities';
 import { getInitials, ROLE_LABELS, timeAgo, ACTIVITY_ICONS, ACTIVITY_COLORS } from '../../utils/helpers';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { clsx } from 'clsx';
+import { Avatar } from '../ui/Avatar';
 
 export const TopBar: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -191,9 +192,7 @@ export const TopBar: React.FC = () => {
             }}
             className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-bg-hover transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-primary-500/20 border border-primary-500/30 flex items-center justify-center text-xs font-bold text-primary-400">
-              {getInitials(user?.first_name ?? '', user?.last_name)}
-            </div>
+            <Avatar firstName={user?.first_name ?? ''} lastName={user?.last_name} avatarUrl={user?.avatar_url} size="xs" className="w-7 h-7" />
             <div className="hidden md:block text-left">
               <p className="text-xs font-medium text-text-primary leading-tight">
                 {user?.first_name} {user?.last_name}

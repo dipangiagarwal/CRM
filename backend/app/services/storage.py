@@ -4,25 +4,26 @@ import os
 from botocore.config import Config
 from app.config import settings
 
-def is_r2_configured() -> bool:
-    """Check if Cloudflare R2 credentials are valid and not placeholders."""
-    dummy_values = {"your_account_id", "your_access_key", "your_secret_key", ""}
+def is_b2_configured() -> bool:
+    """Check if Backblaze B2 credentials are valid and not placeholders."""
+    dummy_values = {"your_key_id", "your_application_key", "your_bucket_id", "your_bucket_name", ""}
     return (
-        settings.R2_ACCOUNT_ID not in dummy_values and
-        settings.R2_ACCESS_KEY_ID not in dummy_values and
-        settings.R2_SECRET_ACCESS_KEY not in dummy_values
+        settings.B2_KEY_ID not in dummy_values and
+        settings.B2_APPLICATION_KEY not in dummy_values and
+        settings.B2_BUCKET_NAME not in dummy_values and
+        settings.B2_ENDPOINT not in dummy_values
     )
 
-def get_r2_client():
+def get_b2_client():
     """
-    R2 is S3-compatible — boto3 works directly.
-    Endpoint URL format is specific to Cloudflare R2.
+    Backblaze B2 is S3-compatible — boto3 works directly.
+    Endpoint format: s3.us-west-004.backblazeb2.com (region varies)
     """
     return boto3.client(
         "s3",
-        endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
-        aws_access_key_id=settings.R2_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
+        endpoint_url=f"https://{settings.B2_ENDPOINT}",
+        aws_access_key_id=settings.B2_KEY_ID,
+        aws_secret_access_key=settings.B2_APPLICATION_KEY,
         config=Config(signature_version="s3v4"),
         region_name="auto"
     )
@@ -37,29 +38,26 @@ async def upload_file(
     mime_type: str
 ) -> dict:
     """
-    Upload file to R2 (or local disk in fallback mode).
+    Upload file to Backblaze B2 (or local disk in fallback mode).
     Path structure: orgs/{org_id}/files/{unique_filename}
-    This keeps files organized per organization.
     """
     ext = filename.split(".")[-1] if "." in filename else ""
     unique_name = f"{uuid.uuid4()}.{ext}" if ext else str(uuid.uuid4())
     storage_path = f"orgs/{org_id}/files/{unique_name}"
 
-    if is_r2_configured():
+    if is_b2_configured():
         try:
-            client = get_r2_client()
+            client = get_b2_client()
             client.put_object(
-                Bucket=settings.R2_BUCKET_NAME,
+                Bucket=settings.B2_BUCKET_NAME,
                 Key=storage_path,
                 Body=file_bytes,
                 ContentType=mime_type
             )
         except Exception as e:
-            print(f"R2 upload failed, trying local disk fallback: {str(e)}")
-            # If R2 upload fails, fall back to local disk
+            print(f"B2 upload failed, falling back to local disk: {str(e)}")
             _save_local(storage_path, file_bytes)
     else:
-        # Use local disk fallback
         _save_local(storage_path, file_bytes)
 
     return {
@@ -78,39 +76,39 @@ def _save_local(storage_path: str, file_bytes: bytes):
     print(f"File saved to local storage fallback: {local_path}")
 
 async def delete_file(storage_path: str):
-    """Delete file from R2 or local disk."""
-    if is_r2_configured():
+    """Delete file from B2 or local disk."""
+    if is_b2_configured():
         try:
-            client = get_r2_client()
+            client = get_b2_client()
             client.delete_object(
-                Bucket=settings.R2_BUCKET_NAME,
+                Bucket=settings.B2_BUCKET_NAME,
                 Key=storage_path
             )
             return
         except Exception as e:
-            print(f"R2 delete failed: {str(e)}")
-            
+            print(f"B2 delete failed: {str(e)}")
+
     # Fallback to local delete
     local_path = os.path.join(LOCAL_STORAGE_DIR, storage_path.replace("/", os.sep))
     if os.path.exists(local_path):
         os.remove(local_path)
-        print(f"File deleted from local storage fallback: {local_path}")
+        print(f"File deleted from local storage: {local_path}")
 
 async def get_file(storage_path: str) -> bytes:
     """
-    Download file from R2 or local disk.
-    Never expose direct R2 URLs — always proxy through backend.
+    Download file from B2 or local disk.
+    Never expose direct B2 URLs — always proxy through backend.
     """
-    if is_r2_configured():
+    if is_b2_configured():
         try:
-            client = get_r2_client()
+            client = get_b2_client()
             response = client.get_object(
-                Bucket=settings.R2_BUCKET_NAME,
+                Bucket=settings.B2_BUCKET_NAME,
                 Key=storage_path
             )
             return response["Body"].read()
         except Exception as e:
-            print(f"R2 read failed, trying local disk fallback: {str(e)}")
+            print(f"B2 read failed, trying local disk: {str(e)}")
 
     # Fallback to local read
     local_path = os.path.join(LOCAL_STORAGE_DIR, storage_path.replace("/", os.sep))

@@ -68,8 +68,9 @@ pixel_crm/
 ```
 ## 🖥️ Development Environment
 
-Built on **Ubuntu 22.04 via WSL2** (Windows Subsystem for Linux) — 
-Matching the production Linux environment on Render for development-production parity.
+Built on **Ubuntu 22.04 via WSL2** (Windows Subsystem for Linux) —  
+
+matching the production Linux environment on Render for development-production parity.
 ---
 
 -----------------------------------------------------------------------------------------------------------------------------------------------

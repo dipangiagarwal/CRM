@@ -66,9 +66,13 @@ pixel_crm/
         ├── pages/          # Route-level pages
         └── components/     # UI components, charts, forms
 ```
+## 🖥️ Development Environment
 
+Built on **Ubuntu 22.04 via WSL2** (Windows Subsystem for Linux) — 
+Matching the production Linux environment on Render for development-production parity.
 ---
 
+-----------------------------------------------------------------------------------------------------------------------------------------------
 ## ⚡ Quick Start (Local)
 
 ### Prerequisites

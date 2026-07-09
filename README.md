@@ -52,7 +52,7 @@ pixel_crm/
 │   │   ├── models/         # SQLAlchemy ORM models
 │   │   ├── schemas/        # Pydantic request/response schemas
 │   │   ├── middleware/     # Auth, rate limiting
-│   │   ├── services/       # R2 storage service
+│   │   ├── services/       # B2 storage service
 │   │   ├── sockets/        # Socket.IO server
 │   │   ├── tasks/          # Celery tasks (email, subscription)
 │   │   └── utils/          # JWT, Redis, security helpers

@@ -210,8 +210,8 @@ Full interactive docs available at `/docs` (Swagger UI).
 ## 👩‍💻 Author
 
 **Dipangi Agarwal**  
-B.Tech CSE · JECRC University, Jaipur  
-Internship at **Pixel Genix IT Solutions** · Feb–Jun 2026  
+B.Tech CSE · JECRC University, Jaipur (2022-2026)
+Internship at **Pixel Genix IT Solutions** · (Feb–Jun 2026)
 Guide: Ms. Veena Kanwar (Founder, Pixel Genix IT Solutions)
 
 ---
